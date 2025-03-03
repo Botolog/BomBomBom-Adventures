@@ -71,30 +71,42 @@ export class Color {
 export class Ctx {
     width: number;
     height: number;
-    buffer: Uint8Array;
+    bufferRGB: Uint8ClampedArray;
+    // buffer: Uint32Array;
     background: Color = new Color(0, 0, 255);
+
 
     constructor(width: number, height: number) {
         this.width = width;
         this.height = height;
         let size: i32 = ((i32)(width * height)) * 4;
-        this.buffer = new Uint8Array(size);
+        this.bufferRGB = new Uint8ClampedArray(size);
+        // this.buffer = new Uint32Array(size);
         this.clear();
     }
+    resize(width: number, height: number): void {
+        this.width = width;
+        this.height = height;
+        let size: i32 = ((i32)(width * height)) * 4;
+        this.bufferRGB = new Uint8ClampedArray(size);
+        // this.buffer = new Uint32Array(size);
+        this.clear();
+    }
+
     setPixel(x: number, y: number, color: Color): void {
-        if (x < 0 || y < 0 || x >= this.width || y >= this.height) return; // Bounds check
+        // if (x < 0 || y < 0 || x >= this.width || y >= this.height) return; // Bounds check
         let index = ((i32)(y * this.width + x)) * 4;
-        this.buffer[index] = color.r;
-        this.buffer[index + 1] = color.g;
-        this.buffer[index + 2] = color.b;
-        this.buffer[index + 3] = color.a;
+        this.bufferRGB[index] = color.r;
+        this.bufferRGB[index + 1] = color.g;
+        this.bufferRGB[index + 2] = color.b;
+        this.bufferRGB[index + 3] = color.a;
     }
     fillRect(x: number, y: number, w: number, h: number, color: Color): void {
-        // for (let i = x; i < x + w; i++) {
-        //     for (let j = y; j < y + h; j++) {
-        //         this.setPixel(i, j, color);
-        //     }
-        // }
+        for (let i = x; i < x + w; i++) {
+            for (let j = y; j < y + h; j++) {
+                this.setPixel(i, j, color);
+            }
+        }
     }
     drawRect(x: number, y: number, w: number, h: number, color: Color): void {
         for (let i = x; i < x + w; i++) {
@@ -116,8 +128,8 @@ export class Ctx {
         // }
         // this.buffer.fill(0);
     }
-    render(): Uint8Array {
-        return this.buffer;
+    render(): Uint8ClampedArray {
+        return this.bufferRGB;
     }
 
 
@@ -136,6 +148,12 @@ export class Canvas {
 
         this.width = ctx.width;
         this.height = ctx.height;
+    }
+
+    resize(width: number, height: number): void {
+        this.width = width;
+        this.height = height;
+        this.ctx.resize(width, height);
     }
 
     update(): void {
@@ -227,6 +245,7 @@ export class Entity {
     gravity: Vector2;
     drag: number;
     manager: EntityManager;
+    flags: i8[];
     public toRender: boolean = true;
 
     constructor() {
@@ -236,6 +255,7 @@ export class Entity {
         this.gravity = new Vector2();
         this.drag = 0.99;
         this.manager = ENTITY_MANAGER;
+        this.flags = [];
         ENTITY_MANAGER.addEntity(this);
     }
 
@@ -315,4 +335,32 @@ export class EntityManager {
             this.entities[i].render(offset);
         }
     }
+}
+
+// import { v128, v128_load, v128_store, i32x4_add } from "std/assembly/simd";
+
+export function addArraysSIMD(base: StaticArray<i32>, mask: StaticArray<i32>): StaticArray<i32> {
+    assert(base.length == mask.length, "Arrays must have the same length");
+    let length = base.length;
+    let result = new StaticArray<i32>(length);
+    let i = 0;
+
+    // Process 4 elements at a time using SIMD
+    for (; i <= length - 4; i += 4) {
+        // @ts-ignore
+        let baseChunk: v128 = v128_load(base.dataStart + (i << 2));
+        // @ts-ignore
+        let maskChunk: v128 = v128_load(mask.dataStart + (i << 2));
+        // @ts-ignore
+        let sumChunk: v128 = i32x4_add(baseChunk, maskChunk);
+        // @ts-ignore
+        v128_store(result.dataStart + (i << 2), sumChunk);
+    }
+
+    // Process any remaining elements
+    for (; i < length; i++) {
+        unchecked(result[i] = base[i] + mask[i]);
+    }
+
+    return result;
 }

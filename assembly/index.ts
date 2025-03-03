@@ -1,3 +1,4 @@
+
 import {
   Canvas,
   Vector2,
@@ -8,8 +9,8 @@ import {
   Ctx
 } from "./utils";
 
-export const width: number = 1400;
-export const height: number = 600;
+export let width: number = 1150;
+export let height: number = 450;
 
 export const INTERVAL: number = 20;
 export let DRAW_HITBOXES: boolean = true;
@@ -28,10 +29,9 @@ GROUND.body.height = 2;
 GROUND.body.coordinates.set(new Vector2(5, 5));
 
 
+// export { Vector2.multiply, Flags };
 
-
-
-
+// export let temp:void = Vector2.
 
 export function genFrame(): void {
   CANVAS.render();
@@ -43,8 +43,8 @@ export function gameTick(): void {
 }
 
 
-export function getCtx(): Uint8Array {
-  return CTX.buffer;
+export function getCtx(): Uint8ClampedArray {
+  return CTX.bufferRGB;
 }
 
 export function moveCam(x: number, y: number): void {
