@@ -275,7 +275,7 @@ export class Body {
     coordinates: Vector2;
     velocity: Vector2;
     gravity: Vector2;
-    drag: number;
+    drag: Vector2;
 
     constructor(width: number = 0, height: number = 0) {
         this.width = width;
@@ -283,7 +283,7 @@ export class Body {
         this.coordinates = new Vector2();
         this.velocity = new Vector2();
         this.gravity = new Vector2();
-        this.drag = 0.99;
+        this.drag = new Vector2(0.5, 0.9);
     }
 
     hitbox(): Hitbox {
@@ -336,7 +336,7 @@ export class Entity {
     flags: Flags[];
     staticObj: bool = false;
     toRender: bool = true;
-    speedLim: number = 2;
+    speedLim: number = 10;
 
     constructor() {
         this.canvas = CANVAS;
@@ -357,7 +357,7 @@ export class Entity {
     update(dt: number): void {
         if (this.staticObj) return;
         this.body.velocity.addV(this.body.gravity.CmultiplyS(dt));
-        this.body.velocity.multiplyS(this.body.drag);
+        this.body.velocity.multiplyV(this.body.drag);
 
         let col = this.manager.collidesWithSomething(this, Flags.GROUND)
         if (col !== null) {

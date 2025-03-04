@@ -27,7 +27,7 @@ let imgData = ctx.createImageData(1*WIDTH, 1*HEIGHT);
 
 
 let lastUpdate = performance.now();
-const tickLength = 1000 / 30; // Desired tick length for 60 FPS
+const tickLength = 1000 / 60; // Desired tick length for 60 FPS
 
 function gameLoop(timestamp) {
   const elapsed = timestamp - lastUpdate;

@@ -42,7 +42,7 @@ Me.body.width = 20;
 Me.body.height = 20;
 Me.body.gravity.set(new Vector2(0, -0.2));
 // Me.body.velocity.y = -10;
-Me.body.drag = 0.95; // TODO make vec2
+Me.body.drag = new Vector2(0.5, 0.95); // TODO make vec2
 Me.body.coordinates.y = 50;
 // export { Vector2.multiply, Flags };
 
@@ -54,10 +54,10 @@ export function keyInput(inputKeys: string[]): void{
   if (inputKeys.includes("ArrowRight")) moveCam(5, 0);
   if (inputKeys.includes("ArrowUp")) moveCam(0, 5);
   if (inputKeys.includes("ArrowDown")) moveCam(0, -5);
-  if (inputKeys.includes("a")) Me.control(-1, 0);
-  if (inputKeys.includes("d")) Me.control(1, 0);
-  if (inputKeys.includes("w")) Me.control(0, 0.25);
-  if (inputKeys.includes("s")) Me.control(0, -0.25);
+  if (inputKeys.includes("a")) Me.control(-3, 0);
+  if (inputKeys.includes("d")) Me.control(3, 0);
+  if (inputKeys.includes("w")) Me.control(0, 0.2);
+  if (inputKeys.includes("s")) Me.control(0, -0.2);
   // if (inputKeys.includes(" ")) jump();
   if (inputKeys.includes("q")) gameTick();
 }
