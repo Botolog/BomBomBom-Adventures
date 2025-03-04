@@ -1,13 +1,13 @@
 import {
   gameTick,
   getCtx,
-  GROUND,
   height,
-  moveCam,
   genFrame,
   width,
+  iColorConv,
+  keyInput
 } from "./build/release.js";
-let BIGBIGARRAY = getCtx();
+
 
 // i have array of all of the rgba values of the pixels of the image displayed on the canvas
 // i want to display the frame on the canvas
@@ -15,48 +15,91 @@ let BIGBIGARRAY = getCtx();
 const WIDTH = width.value;
 const HEIGHT = height.value;
 
-console.log(GROUND);
-
 let canvas = document.getElementById("canvas");
-canvas.style.width = WIDTH + "px";
-canvas.style.height = HEIGHT + "px";
+canvas.width = WIDTH;
+canvas.height = HEIGHT;
+// canvas.style.width = 10*WIDTH + "px";
+// canvas.style.height = 10*HEIGHT + "px";
 
-let ctx = canvas.getContext("2d", { willReadFrequently: true });
-let imgData = ctx.createImageData(WIDTH, HEIGHT);
+let ctx = canvas.getContext("2d", { willReadFrequently: false });
+ctx.imageSmoothingEnabled = false;
+let imgData = ctx.createImageData(1*WIDTH, 1*HEIGHT);
 
-function renderFrame() {
-  imgData.data.set(getCtx());
-  ctx.putImageData(imgData, 0, 0);
+
+let lastUpdate = performance.now();
+const tickLength = 1000 / 30; // Desired tick length for 60 FPS
+
+function gameLoop(timestamp) {
+  const elapsed = timestamp - lastUpdate;
+
+  if (elapsed >= tickLength) {
+    keyInput(Array.from(keysPressed));
+    gameTick(elapsed/15);
+    lastUpdate = timestamp - (elapsed % tickLength); // Adjust for any drift
+  }
+  requestAnimationFrame(gameLoop);
 }
 
-function testFPS(timeOfTest) {
+// Start the game loop
+requestAnimationFrame(gameLoop);
+
+
+function renderFrame() {
+  //   iColorConv();
+  imgData.data.set(iColorConv());
+  ctx.putImageData(imgData, 0, 0)
+  // for (let i = 0; i < imgData.data.length; i++) {
+  //   imgData.data[i] = 50;
+  // }
+  //   imgData.data.set(getCtx());
+  // ctx.putImageData(imgData, 0, 0, 0, 0, );
+}
+
+function testFPS(timeOfTest, framesToRender=100) {
   let start = Date.now();
   let end = start + timeOfTest * 1000;
   let i = 0;
 
   while (Date.now() < end) {
     genFrame();
-    gameTick();
     renderFrame();
 
     i++;
   }
-  console.log("max FPS at testing", i / timeOfTest);
+  console.log("[1] FPS at testing", i / timeOfTest);
+
+  start = Date.now()
+  for (let i=0; i<framesToRender; i++){
+    genFrame()
+    renderFrame()
+  }
+  end = Date.now();
+  console.log("[2] FPS at testing", Math.round((1000*framesToRender)/(end-start)));
+
 }
 
+// setInterval(genFrame, 1);
 
 setInterval(() => {
   genFrame();
-  gameTick();
+  // gameTick();
   renderFrame();
   // console.log('frame rendered');
-}, 20);
+}, 10);
 
-// listen for keys
+
+// // listen for keys
+// document.addEventListener("keydown", (e) => {
+//   if (e.key == "`") testFPS(1);
+//   if (e.key == "p") {}
+// });
+
+const keysPressed = new Set();
+
 document.addEventListener("keydown", (e) => {
-  if (e.key == "ArrowLeft") moveCam(-1, 0);
-  if (e.key == "ArrowRight") moveCam(1, 0);
-  if (e.key == "ArrowUp") moveCam(0, 1);
-  if (e.key == "ArrowDown") moveCam(0, -1);
-  if (e.key == "e") testFPS(1);
+  keysPressed.add(e.key);
+});
+
+document.addEventListener("keyup", (e) => {
+  keysPressed.delete(e.key);
 });

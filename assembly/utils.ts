@@ -3,6 +3,7 @@ import {
     ENTITY_MANAGER,
     DRAW_HITBOXES,
     CAMERA,
+    CTX,
 } from "./index";
 
 export enum Direction {
@@ -21,6 +22,29 @@ export enum Flags {
 
 class Hitbox { x1!: number; y1!: number; x2!: number; y2!: number; }
 
+export class Properties {
+    speed: object = {
+        up: 0.25,
+        down: 0,
+        right: 1,
+        left: 1,
+    }    
+}
+
+
+export function absMin(a:number, b:number):number{
+    if (a == 0) return 0;
+    let i = a/abs(a)
+    return i*min(abs(a), b)
+}
+
+
+export function absMax(a:number, b:number):number{
+    if (a == 0) return b;
+    let i = a/abs(a)
+    return i*max(abs(a), b)
+}
+
 export class Vector2 {
     x: number;
     y: number;
@@ -30,27 +54,50 @@ export class Vector2 {
         this.y = y;
     }
 
-    add(vector: Vector2): void {
+    addV(vector: Vector2): Vector2 {
         this.x += vector.x;
         this.y += vector.y;
+        return this;
     }
 
-    multiply(scalar: number): void {
+    multiplyV(vector: Vector2): Vector2 {
+        this.x *= vector.x;
+        this.y *= vector.y;
+        return this
+    }
+
+    addS(scalar: number): Vector2 {
+        this.x += scalar;
+        this.y += scalar;
+        return this;
+    }
+
+    multiplyS(scalar: number): Vector2 {
         this.x *= scalar;
         this.y *= scalar;
+        return this;
     }
 
-    Cadd(vector: Vector2): Vector2 {
+    CmultiplyS(scalar: number): Vector2 {
+        return new Vector2(this.x * scalar, this.y * scalar)
+    }
+
+    CaddV(vector: Vector2): Vector2 {
         return new Vector2(this.x + vector.x, this.y + vector.y);
     }
 
-    set(vector: Vector2): void {
+    set(vector: Vector2): Vector2 {
         this.x = vector.x;
         this.y = vector.y;
+        return this;
     }
 
     clone(): Vector2 {
         return new Vector2(this.x, this.y);
+    }
+
+    toString(): string {
+        return "(" + this.x.toString() + ", " + this.y.toString() + ")"
     }
 }
 
@@ -67,55 +114,95 @@ export class Color {
     }
 }
 
+export function iColor(R: i32, G: i32, B: i32, A: i32 = 255): i32 {
+    return (R << 24) | (G << 16) | (B << 8) | A;
+}
+
+// export function iColorConv(): Uint8Array{
+//     const iframe: Uint32Array = CTX.frame();
+//     let frame: Uint8Array = new Uint8Array(iframe.length*4);
+//     let pixel: i32;
+//     for (let i=0; i<iframe.length; i+=4){
+//         pixel = iframe[i/4];
+//         frame[i]     = (i8)(pixel >> 24) & 0xff; // the R value
+//         frame[i + 1] = (i8)(pixel >> 16) & 0xff; // the G value
+//         frame[i + 2] = (i8)(pixel >> 8) & 0xff; // the B value
+//         frame[i + 3] = (i8)(pixel & 0xff); // the A value
+//     }
+//     return frame;
+// }
+
+export function iColorConv(): Uint8ClampedArray {
+    const iframe: Uint32Array = CTX.frame();
+    const frameLength: i32 = iframe.length * Uint32Array.BYTES_PER_ELEMENT;
+    const frameBuffer: ArrayBuffer = new ArrayBuffer(frameLength);
+    const frame: Uint8ClampedArray = Uint8ClampedArray.wrap(frameBuffer);
+    memory.copy(
+        changetype<usize>(frame.buffer),
+        changetype<usize>(iframe.buffer),
+        frameLength
+    );
+    return frame;
+}
+
+// export function iColor2Color(color: i32): 
 
 export class Ctx {
     width: number;
     height: number;
-    bufferRGB: Uint8ClampedArray;
-    // buffer: Uint32Array;
-    background: Color = new Color(0, 0, 255);
+    buffer: Uint32Array;
+    background: i32 = iColor(50, 50, 100);
 
 
     constructor(width: number, height: number) {
         this.width = width;
         this.height = height;
-        let size: i32 = ((i32)(width * height)) * 4;
-        this.bufferRGB = new Uint8ClampedArray(size);
-        // this.buffer = new Uint32Array(size);
-        this.clear();
+        let size: i32 = (i32)(width * height);
+        this.buffer = new Uint32Array(size);
+        // this.clear();
     }
     resize(width: number, height: number): void {
         this.width = width;
         this.height = height;
-        let size: i32 = ((i32)(width * height)) * 4;
-        this.bufferRGB = new Uint8ClampedArray(size);
-        // this.buffer = new Uint32Array(size);
+        let size: i32 = (i32)(width * height);
+        this.buffer = new Uint32Array(size);
         this.clear();
     }
 
-    setPixel(x: number, y: number, color: Color): void {
-        // if (x < 0 || y < 0 || x >= this.width || y >= this.height) return; // Bounds check
-        let index = ((i32)(y * this.width + x)) * 4;
-        this.bufferRGB[index] = color.r;
-        this.bufferRGB[index + 1] = color.g;
-        this.bufferRGB[index + 2] = color.b;
-        this.bufferRGB[index + 3] = color.a;
+    // setPixel(x: number, y: number, color: Color): void {
+    // if (x < 0 || y < 0 || x >= this.width || y >= this.height) return; // Bounds check
+    //     let index = ((i32)(y * this.width + x)) * 4;
+    //     this.bufferRGB[index] = color.r;
+    //     this.bufferRGB[index + 1] = color.g;
+    //     this.bufferRGB[index + 2] = color.b;
+    //     this.bufferRGB[index + 3] = color.a;
+    // }
+
+    setiPixel(x: number, y: number, icolor: i32): void {
+        let index = (i32)((y * this.width + x));
+        if (x < 0 || y < 0 || x >= this.width || y >= this.height) return; // Bounds check
+        // if (index < 0 || index >= this.buffer.length) return ;
+        this.buffer[index] = icolor;
     }
-    fillRect(x: number, y: number, w: number, h: number, color: Color): void {
+
+    fillRect(x: number, y: number, w: number, h: number, color: i32): void {
+        x = (i32)(x); y = (i32)(y); w = (i32)(w); h = (i32)(h)
         for (let i = x; i < x + w; i++) {
             for (let j = y; j < y + h; j++) {
-                this.setPixel(i, j, color);
+                // this.setPixel(i, j, color);
+                this.setiPixel(i, j, color)
             }
         }
     }
-    drawRect(x: number, y: number, w: number, h: number, color: Color): void {
+    drawRect(x: number, y: number, w: number, h: number, color: i32): void {
+        x = (i32)(x); y = (i32)(y); w = (i32)(w); h = (i32)(h)
         for (let i = x; i < x + w; i++) {
-            this.setPixel(i, y, color);
-            this.setPixel(i, y + h - 1, color);
+            this.setiPixel(i, y, color);
+            this.setiPixel(i, y + h - 1, color);
         }
         for (let j = y; j < y + h; j++) {
-            this.setPixel(x, j, color);
-            this.setPixel(x + w - 1, j, color);
+            this.setiPixel(x, j, color);
+            this.setiPixel(x + w - 1, j, color);
         }
     }
     clear(): void {
@@ -128,13 +215,25 @@ export class Ctx {
         // }
         // this.buffer.fill(0);
     }
-    render(): Uint8ClampedArray {
-        return this.bufferRGB;
+    frame(): Uint32Array {
+        return this.buffer;
     }
 
 
 }
 
+
+export class Camera {
+    coordinates: Vector2;
+
+    constructor() {
+        this.coordinates = new Vector2();
+    }
+
+    public move(vector: Vector2): void {
+        this.coordinates.addV(vector);
+    }
+}
 
 export class Canvas {
     ctx: Ctx;
@@ -156,9 +255,9 @@ export class Canvas {
         this.ctx.resize(width, height);
     }
 
-    update(): void {
-        ENTITY_MANAGER.update();
-    }
+    // update(): void {
+    //     ENTITY_MANAGER.update();
+    // }
 
     render(offset: Vector2 | null = null): void {
         this.ctx.clear();
@@ -170,29 +269,21 @@ export class Canvas {
     }
 }
 
-export class Camera {
-    coordinates: Vector2;
-
-    constructor() {
-        this.coordinates = new Vector2();
-    }
-
-    public move(vector: Vector2): void {
-        this.coordinates.add(vector);
-    }
-}
-
 export class Body {
     width: number;
     height: number;
     coordinates: Vector2;
     velocity: Vector2;
+    gravity: Vector2;
+    drag: number;
 
     constructor(width: number = 0, height: number = 0) {
         this.width = width;
         this.height = height;
         this.coordinates = new Vector2();
         this.velocity = new Vector2();
+        this.gravity = new Vector2();
+        this.drag = 0.99;
     }
 
     hitbox(): Hitbox {
@@ -204,7 +295,7 @@ export class Body {
         };
     }
 
-    collide(another: Body): boolean {
+    collide(another: Body): bool {
         const hitbox1 = this.hitbox();
         const hitbox2 = another.hitbox();
 
@@ -234,55 +325,73 @@ export class Body {
     }
 
     move(vector: Vector2): void {
-        this.coordinates.add(vector);
+        this.coordinates.addV(vector);
     }
 }
 
 export class Entity {
     canvas: Canvas;
-    texture: string;
     body: Body;
-    gravity: Vector2;
-    drag: number;
     manager: EntityManager;
-    flags: i8[];
-    public toRender: boolean = true;
+    flags: Flags[];
+    staticObj: bool = false;
+    toRender: bool = true;
+    speedLim: number = 2;
 
     constructor() {
         this.canvas = CANVAS;
-        this.texture = "/assets/artDev/temp/herosimus-standing-0.png";
         this.body = new Body();
-        this.gravity = new Vector2();
-        this.drag = 0.99;
         this.manager = ENTITY_MANAGER;
         this.flags = [];
         ENTITY_MANAGER.addEntity(this);
     }
 
-    public jump(): void {
-        if (this.manager.collidesWithSomething(this)) {
-            this.body.coordinates.add(new Vector2(0, 1));
-            this.body.velocity.add(new Vector2(0, 3));
+    jump(): void {
+        if (this.manager.collidesWithSomething(this, Flags.GROUND)) {
+            this.body.coordinates.y += 5;
+            this.body.velocity.y = 7;
             console.log("jumped");
         }
     }
 
-    update(): void {
-        this.body.velocity.multiply(this.drag);
-        this.body.velocity.add(this.gravity);
+    update(dt: number): void {
+        if (this.staticObj) return;
+        this.body.velocity.addV(this.body.gravity.CmultiplyS(dt));
+        this.body.velocity.multiplyS(this.body.drag);
 
-        // if (this.manager.GROUND?.body.collide(this.body)) {
-        //     this.body.velocity.y = 0;
-        // }
+        let col = this.manager.collidesWithSomething(this, Flags.GROUND)
+        if (col !== null) {
+            this.body.velocity.y = 0;
+            this.body.coordinates.y = col.body.coordinates.y+col.body.height
+        }
 
-        this.body.coordinates.add(this.body.velocity);
+        this.body.velocity.x = absMin(this.body.velocity.x, this.speedLim)
+
+        this.body.coordinates.addV(this.body.velocity.CmultiplyS(dt));
+
+        // console.log(this.body.coordinates.x.toString() +", "+ this.body.coordinates.y.toString());
+        // console.log(this.body.velocity.x.toString() +", "+ this.body.velocity.y.toString());
+
+    }
+
+    control(x:number, y:number): void{
+        this.body.velocity.addV(new Vector2(x, y));
+        if (y>0) this.jump();
+    }
+
+    addFlag(flag: Flags): void{
+        if (this.flags.includes(flag)) return ;
+        this.flags.push(flag);
+    }
+
+    isFlag(flag: Flags): bool{
+        return this.flags.includes(flag);
     }
 
     render(offset: Vector2): void {
         if (!this.toRender) {
             return;
         }
-        let red = new Color(255, 0, 0);
         // this.canvas.ctx.fillRect(
         //     this.body.coordinates.x - offset.x,
         //     this.body.coordinates.y - offset.y,
@@ -292,12 +401,12 @@ export class Entity {
         // );
 
         if (DRAW_HITBOXES) {
-            this.canvas.ctx.fillRect(
+            this.canvas.ctx.drawRect(
                 this.body.coordinates.x - offset.x,
                 this.body.coordinates.y - offset.y,
                 this.body.width,
                 this.body.height,
-                red
+                iColor(255, 0, 0)
             );
         }
     }
@@ -314,19 +423,19 @@ export class EntityManager {
         this.entities.push(entity);
     }
 
-    collidesWithSomething(entity: Entity): boolean {
+    collidesWithSomething(entity: Entity, flag: Flags = Flags.NONE): Entity|null {
         // return this.entities.some(another => entity !== another && entity.body.collide(another.body));
         for (let i = 0; i < this.entities.length; i++) {
-            if (entity !== this.entities[i] && entity.body.collide(this.entities[i].body)) {
-                return true;
+            if (entity !== this.entities[i] && entity.body.collide(this.entities[i].body) && this.entities[i].isFlag(flag)) {
+                return this.entities[i];
             }
         }
-        return false;
+        return null;
     }
 
-    update(): void {
+    update(dt: number): void {
         for (let i = 0; i < this.entities.length; i++) {
-            this.entities[i].update();
+            this.entities[i].update(dt);
         }
     }
 
@@ -337,30 +446,30 @@ export class EntityManager {
     }
 }
 
+
 // import { v128, v128_load, v128_store, i32x4_add } from "std/assembly/simd";
 
-export function addArraysSIMD(base: StaticArray<i32>, mask: StaticArray<i32>): StaticArray<i32> {
-    assert(base.length == mask.length, "Arrays must have the same length");
-    let length = base.length;
-    let result = new StaticArray<i32>(length);
-    let i = 0;
+// export function addArraysSIMD(base: StaticArray<i32>, mask: StaticArray<i32>): StaticArray<i32> {
+//     assert(base.length == mask.length, "Arrays must have the same length");
+//     let length = base.length;
+//     let result = new StaticArray<i32>(length);
+//     let i = 0;
 
-    // Process 4 elements at a time using SIMD
-    for (; i <= length - 4; i += 4) {
-        // @ts-ignore
-        let baseChunk: v128 = v128_load(base.dataStart + (i << 2));
-        // @ts-ignore
-        let maskChunk: v128 = v128_load(mask.dataStart + (i << 2));
-        // @ts-ignore
-        let sumChunk: v128 = i32x4_add(baseChunk, maskChunk);
-        // @ts-ignore
-        v128_store(result.dataStart + (i << 2), sumChunk);
-    }
+//     // Process 4 elements at a time using SIMD
+//     for (; i <= length - 4; i += 4) {
+//         let baseChunk: v128 = v128_load(base.dataStart + (i << 2));
+//         // @ts-ignore
+//         let maskChunk: v128 = v128_load(mask.dataStart + (i << 2));
+//         // @ts-ignore
+//         let sumChunk: v128 = i32x4_add(baseChunk, maskChunk);
+//         // @ts-ignore
+//         v128_store(result.dataStart + (i << 2), sumChunk);
+//     }
 
-    // Process any remaining elements
-    for (; i < length; i++) {
-        unchecked(result[i] = base[i] + mask[i]);
-    }
+//     // Process any remaining elements
+//     for (; i < length; i++) {
+//         unchecked(result[i] = base[i] + mask[i]);
+//     }
 
-    return result;
-}
+//     return result;
+// }

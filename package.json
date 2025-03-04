@@ -7,8 +7,8 @@
     }
   },
   "scripts": {
-    "asbuild:debug": "asc assembly/index.ts --enable simd --target debug",
-    "asbuild:release": "asc assembly/index.ts --enable simd --target release",
+    "asbuild:debug": "asc assembly/index.ts --target debug",
+    "asbuild:release": "asc assembly/index.ts -O3 --target release",
     "asbuild": "npm run asbuild:debug && npm run asbuild:release",
     "test": "node tests",
     "start": "npx serve .",
@@ -18,6 +18,7 @@
     "assemblyscript": "^0.27.34"
   },
   "dependencies": {
+    "as-sleep": "^0.0.2",
     "as2d": "^0.1.0"
   }
 }
