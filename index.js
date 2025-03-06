@@ -26,17 +26,9 @@ ctx.imageSmoothingEnabled = false;
 let imgData = ctx.createImageData(1*WIDTH, 1*HEIGHT);
 
 
-let lastUpdate = performance.now();
-const tickLength = 1000 / 60; // Desired tick length for 60 FPS
-
 function gameLoop(timestamp) {
-  const elapsed = timestamp - lastUpdate;
-
-  if (elapsed >= tickLength) {
     keyInput(Array.from(keysPressed));
-    gameTick(elapsed/15);
-    lastUpdate = timestamp - (elapsed % tickLength); // Adjust for any drift
-  }
+    gameTick(1);
   requestAnimationFrame(gameLoop);
 }
 
@@ -85,7 +77,7 @@ setInterval(() => {
   // gameTick();
   renderFrame();
   // console.log('frame rendered');
-}, 10);
+}, 1);
 
 
 // // listen for keys
