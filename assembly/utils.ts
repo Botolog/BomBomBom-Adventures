@@ -15,7 +15,7 @@ export enum Direction {
 }
 
 export enum Flags {
-    NONE = -1,
+    ANY = -1,
     GROUND = 0,
     CHARACTER = 1
 }
@@ -28,21 +28,24 @@ export class Properties {
         down: 0,
         right: 1,
         left: 1,
-    }    
+    }
 }
 
+function min4(a: number, b: number, c: number, d: number): number {
+    return min(min(a, b), min(c, d));
+}
 
-export function absMin(a:number, b:number):number{
+export function absMin(a: number, b: number): number {
     if (a == 0) return 0;
-    let i = a/abs(a)
-    return i*min(abs(a), b)
+    let i = a / abs(a)
+    return i * min(abs(a), b)
 }
 
 
-export function absMax(a:number, b:number):number{
+export function absMax(a: number, b: number): number {
     if (a == 0) return b;
-    let i = a/abs(a)
-    return i*max(abs(a), b)
+    let i = a / abs(a)
+    return i * max(abs(a), b)
 }
 
 export class Vector2 {
@@ -82,8 +85,16 @@ export class Vector2 {
         return new Vector2(this.x * scalar, this.y * scalar)
     }
 
+    CmultiplyV(vector: Vector2): Vector2 {
+        return new Vector2(this.x * vector.x, this.y * vector.y)
+    }
+
     CaddV(vector: Vector2): Vector2 {
         return new Vector2(this.x + vector.x, this.y + vector.y);
+    }
+
+    absMin(lim: number): Vector2 {
+        return new Vector2(absMin(this.x, lim), absMin(this.y, lim));
     }
 
     set(vector: Vector2): Vector2 {
@@ -276,6 +287,7 @@ export class Body {
     velocity: Vector2;
     gravity: Vector2;
     drag: Vector2;
+    friction: Vector2 = new Vector2(1, 1);
 
     constructor(width: number = 0, height: number = 0) {
         this.width = width;
@@ -295,6 +307,7 @@ export class Body {
         };
     }
 
+
     collide(another: Body): bool {
         const hitbox1 = this.hitbox();
         const hitbox2 = another.hitbox();
@@ -308,20 +321,39 @@ export class Body {
     }
 
     sideCollide(another: Body): Direction {
-        const hitbox1 = this.hitbox();
-        const hitbox2 = another.hitbox();
+        const a = this.hitbox();
+        const b = another.hitbox();
 
-        if (hitbox1.x1 <= hitbox2.x2 && hitbox1.x2 >= hitbox2.x1) {
-            if (hitbox1.y1 <= hitbox2.y2 && hitbox1.y2 >= hitbox2.y1) {
-                return hitbox1.x1 <= hitbox2.x1 ? Direction.LEFT : Direction.RIGHT;
-            }
+        // First, check if the hitboxes intersect at all.
+        if (a.x2 < b.x1 || a.x1 > b.x2 || a.y2 < b.y1 || a.y1 > b.y2) {
+            return Direction.NONE;
         }
-        if (hitbox1.y1 <= hitbox2.y2 && hitbox1.y2 >= hitbox2.y1) {
-            if (hitbox1.x1 <= hitbox2.x2 && hitbox1.x2 >= hitbox2.x1) {
-                return hitbox1.y1 <= hitbox2.y1 ? Direction.UP : Direction.DOWN;
-            }
+
+        // Calculate penetration depths in all directions:
+        // How far is 'this' penetrating into 'another' from each side?
+        const penetrationLeft = b.x2 - a.x1; // collision from left
+        const penetrationRight = a.x2 - b.x1; // collision from right
+        const penetrationTop = b.y2 - a.y1; // collision from top
+        const penetrationBottom = a.y2 - b.y1; // collision from bottom
+
+        // Determine which penetration is the smallest.
+        // That will be the primary collision direction.
+        const minPenetration = min4(
+            penetrationLeft,
+            penetrationRight,
+            penetrationTop,
+            penetrationBottom
+        );
+
+        if (minPenetration === penetrationLeft) {
+            return Direction.LEFT;
+        } else if (minPenetration === penetrationRight) {
+            return Direction.RIGHT;
+        } else if (minPenetration === penetrationTop) {
+            return Direction.DOWN;
+        } else {
+            return Direction.UP;
         }
-        return Direction.NONE;
     }
 
     move(vector: Vector2): void {
@@ -336,7 +368,7 @@ export class Entity {
     flags: Flags[];
     staticObj: bool = false;
     toRender: bool = true;
-    speedLim: number = 10;
+    speedLim: number = 20;
 
     constructor() {
         this.canvas = CANVAS;
@@ -347,44 +379,93 @@ export class Entity {
     }
 
     jump(): void {
-        if (this.manager.collidesWithSomething(this, Flags.GROUND)) {
-            this.body.coordinates.y += 5;
-            this.body.velocity.y = 7;
-            console.log("jumped");
+        let colds = this.manager.sidesThatCollides(this, Flags.GROUND);
+        if (colds.length > 0) {
+            if (colds.includes(Direction.UP)) return;
+            if (colds.includes(Direction.RIGHT)) {
+                this.body.coordinates.x -= 3;
+                this.body.velocity.y = 4;
+                this.body.velocity.x = -17;
+            }
+            if (colds.includes(Direction.LEFT)) {
+                this.body.coordinates.x += 3;
+                this.body.velocity.y = 4;
+                this.body.velocity.x = 17;
+            }
+            if (colds.includes(Direction.DOWN)) {
+                this.body.coordinates.y += 3;
+                this.body.velocity.y = 7;
+            }
+            // console.log("jumped");
         }
+    }
+
+    calcFriction(): Vector2 {
+        let colds = this.manager.collidesWithSomething(this);
+        let mod = new Vector2(1, 1);
+        for (let i = 0; i < colds.length; i++) {
+            console.log(colds[i].body.friction.toString());
+            
+            mod.multiplyV(colds[i].body.friction);
+        }
+        // console.log(mod.toString());
+        
+        return mod;
     }
 
     update(dt: number): void {
         if (this.staticObj) return;
         this.body.velocity.addV(this.body.gravity.CmultiplyS(dt));
-        this.body.velocity.multiplyV(this.body.drag);
+        this.body.velocity.multiplyV(this.body.drag.CmultiplyV(this.calcFriction()));
 
-        let col = this.manager.collidesWithSomething(this, Flags.GROUND)
-        if (col !== null) {
-            this.body.velocity.y = 0;
-            this.body.coordinates.y = col.body.coordinates.y+col.body.height
+
+        // this.body.velocity.x = absMin(this.body.velocity.x, this.speedLim)
+
+        this.body.coordinates.addV(this.body.velocity.CmultiplyS(dt).absMin(this.speedLim));
+
+        let colds = this.manager.collidesWithSomething(this, Flags.GROUND)
+        for (let i = 0; i < colds.length; i++) {
+            const col = colds[i]
+            const side = this.body.sideCollide(col.body)
+            if (side == Direction.DOWN || side == Direction.UP) this.body.velocity.y *= 0.01;
+            if (side == Direction.LEFT || side == Direction.RIGHT) this.body.velocity.x *= 0.01;
+            switch (side) {
+                case Direction.UP:
+                    this.body.coordinates.y = col.body.coordinates.y - this.body.height
+                    break;
+                case Direction.DOWN:
+                    this.body.coordinates.y = col.body.coordinates.y + col.body.height
+                    break;
+                case Direction.LEFT:
+                    this.body.coordinates.x = col.body.coordinates.x + col.body.width
+                    break;
+                case Direction.RIGHT:
+                    this.body.coordinates.x = col.body.coordinates.x - this.body.width
+                    break;
+
+                default:
+                    break;
+            }
         }
-
-        this.body.velocity.x = absMin(this.body.velocity.x, this.speedLim)
-
-        this.body.coordinates.addV(this.body.velocity.CmultiplyS(dt));
 
         // console.log(this.body.coordinates.x.toString() +", "+ this.body.coordinates.y.toString());
         // console.log(this.body.velocity.x.toString() +", "+ this.body.velocity.y.toString());
 
     }
 
-    control(x:number, y:number): void{
+    control(x: number, y: number): void {
+        if (this.manager.collidesWithSomething(this).length == 0) x *= 0.7 
         this.body.velocity.addV(new Vector2(x, y));
-        if (y>0) this.jump();
+        if (y > 0) this.jump();
     }
 
-    addFlag(flag: Flags): void{
-        if (this.flags.includes(flag)) return ;
+    addFlag(flag: Flags): void {
+        if (this.flags.includes(flag)) return;
         this.flags.push(flag);
     }
 
-    isFlag(flag: Flags): bool{
+    hasFlag(flag: Flags): bool {
+        if (flag == Flags.ANY) return true;
         return this.flags.includes(flag);
     }
 
@@ -423,14 +504,24 @@ export class EntityManager {
         this.entities.push(entity);
     }
 
-    collidesWithSomething(entity: Entity, flag: Flags = Flags.NONE): Entity|null {
+    collidesWithSomething(entity: Entity, flag: Flags = Flags.ANY): Entity[] {
+        let collidedEntities: Entity[] = []
         // return this.entities.some(another => entity !== another && entity.body.collide(another.body));
         for (let i = 0; i < this.entities.length; i++) {
-            if (entity !== this.entities[i] && entity.body.collide(this.entities[i].body) && this.entities[i].isFlag(flag)) {
-                return this.entities[i];
+            if (entity !== this.entities[i] && entity.body.collide(this.entities[i].body) && this.entities[i].hasFlag(flag)) {
+                collidedEntities.push(this.entities[i]);
             }
         }
-        return null;
+        return collidedEntities;
+    }
+
+    sidesThatCollides(entitiy: Entity, flag: Flags = Flags.ANY): Direction[] {
+        let colds = this.collidesWithSomething(entitiy, flag);
+        let dirs: Direction[] = [];
+        for (let i = 0; i < colds.length; i++) {
+            dirs.push(entitiy.body.sideCollide(colds[i].body));
+        }
+        return dirs;
     }
 
     update(dt: number): void {

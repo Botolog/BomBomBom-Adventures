@@ -5,7 +5,8 @@ import {
   genFrame,
   width,
   iColorConv,
-  keyInput
+  keyInput,
+  sc
 } from "./build/release.js";
 
 
@@ -70,7 +71,7 @@ function testFPS(timeOfTest, framesToRender=100) {
 
 }
 
-// setInterval(genFrame, 1);
+// setInterval(sc, 10);
 
 setInterval(() => {
   genFrame();

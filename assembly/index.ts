@@ -35,15 +35,35 @@ GROUND.body.width = CTX.width * 10;
 GROUND.body.height = 100;
 GROUND.body.coordinates.set(new Vector2(5, -93));
 GROUND.staticObj = true;
+GROUND.body.friction = new Vector2(0.75, 0.75)
 GROUND.addFlag(Flags.GROUND);
+
+let obs: Entity = new Entity();
+obs.body.width = 100;
+obs.body.height = 100;
+obs.body.gravity.set(new Vector2(0, -0.2));
+obs.body.coordinates.set(new Vector2(50, 30));
+obs.body.friction = new Vector2(0.75, 0.8)
+obs.staticObj = true;
+obs.addFlag(Flags.GROUND);
+
+let obs1: Entity = new Entity();
+obs1.body.width = 100;
+obs1.body.height = 100;
+obs1.body.gravity.set(new Vector2(0, -0.2));
+obs1.body.coordinates.set(new Vector2(50+50+180, 30));
+obs1.body.friction = new Vector2(0.75, 0.8)
+obs1.staticObj = true;
+obs1.addFlag(Flags.GROUND);
 
 export let Me: Entity = new Entity();
 Me.body.width = 20; 
 Me.body.height = 20;
 Me.body.gravity.set(new Vector2(0, -0.2));
 // Me.body.velocity.y = -10;
-Me.body.drag = new Vector2(0.5, 0.95); // TODO make vec2
+Me.body.drag = new Vector2(0.94, 0.99);
 Me.body.coordinates.y = 50;
+Me.speedLim = 10;
 // export { Vector2.multiply, Flags };
 
 // export let temp:void = Vector2.
@@ -54,9 +74,9 @@ export function keyInput(inputKeys: string[]): void{
   if (inputKeys.includes("ArrowRight")) moveCam(5, 0);
   if (inputKeys.includes("ArrowUp")) moveCam(0, 5);
   if (inputKeys.includes("ArrowDown")) moveCam(0, -5);
-  if (inputKeys.includes("a")) Me.control(-3, 0);
-  if (inputKeys.includes("d")) Me.control(3, 0);
-  if (inputKeys.includes("w")) Me.control(0, 0.2);
+  if (inputKeys.includes("a")) Me.control(-0.8, 0);
+  if (inputKeys.includes("d")) Me.control(0.8, 0);
+  if (inputKeys.includes("w")) Me.control(0, 0.02);
   if (inputKeys.includes("s")) Me.control(0, -0.2);
   // if (inputKeys.includes(" ")) jump();
   if (inputKeys.includes("q")) gameTick();
@@ -85,4 +105,8 @@ export function getCtx(): Uint32Array {
 
 export function moveCam(x: number, y: number): void {
   CAMERA.move(new Vector2(x, y));
+}
+
+export function sc(): void{
+  console.log(Me.body.sideCollide(obs.body).toString());
 }
