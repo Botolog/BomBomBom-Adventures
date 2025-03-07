@@ -244,6 +244,9 @@ export class Camera {
     public move(vector: Vector2): void {
         this.coordinates.addV(vector);
     }
+
+    //TODO: make zoom in and out (scaling)
+    //TODO: make camera tracking (with pos and with velocity)
 }
 
 export class Canvas {
@@ -379,18 +382,20 @@ export class Entity {
     }
 
     jump(): void {
+        const vj = 3;
+        const hj = 13;
         let colds = this.manager.sidesThatCollides(this, Flags.GROUND);
         if (colds.length > 0) {
             if (colds.includes(Direction.UP)) return;
             if (colds.includes(Direction.RIGHT)) {
                 this.body.coordinates.x -= 3;
-                this.body.velocity.y = 4;
-                this.body.velocity.x = -17;
+                this.body.velocity.y = vj;
+                this.body.velocity.x = -hj;
             }
             if (colds.includes(Direction.LEFT)) {
                 this.body.coordinates.x += 3;
-                this.body.velocity.y = 4;
-                this.body.velocity.x = 17;
+                this.body.velocity.y = vj;
+                this.body.velocity.x = hj;
             }
             if (colds.includes(Direction.DOWN)) {
                 this.body.coordinates.y += 3;
@@ -404,7 +409,7 @@ export class Entity {
         let colds = this.manager.collidesWithSomething(this);
         let mod = new Vector2(1, 1);
         for (let i = 0; i < colds.length; i++) {
-            console.log(colds[i].body.friction.toString());
+            // console.log(colds[i].body.friction.toString());
             
             mod.multiplyV(colds[i].body.friction);
         }
@@ -420,7 +425,8 @@ export class Entity {
 
 
         // this.body.velocity.x = absMin(this.body.velocity.x, this.speedLim)
-
+        console.log(this.body.velocity.toString());
+        
         this.body.coordinates.addV(this.body.velocity.CmultiplyS(dt).absMin(this.speedLim));
 
         let colds = this.manager.collidesWithSomething(this, Flags.GROUND)
