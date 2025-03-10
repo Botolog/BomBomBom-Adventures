@@ -9,6 +9,8 @@ import {
   sc
 } from "./build/release.js";
 
+import { applyNoise, applyChromaticAberration, applyScanlines } from "./effects.js";
+
 
 // i have array of all of the rgba values of the pixels of the image displayed on the canvas
 // i want to display the frame on the canvas
@@ -19,8 +21,9 @@ const HEIGHT = height.value;
 let canvas = document.getElementById("canvas");
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
-// canvas.style.width = 10*WIDTH + "px";
-// canvas.style.height = 10*HEIGHT + "px";
+const mod = 1.3; 
+canvas.style.width = mod*WIDTH + "px";
+canvas.style.height = mod*HEIGHT + "px";
 
 let ctx = canvas.getContext("2d", { willReadFrequently: false });
 ctx.imageSmoothingEnabled = false;
@@ -40,6 +43,10 @@ requestAnimationFrame(gameLoop);
 function renderFrame() {
   //   iColorConv();
   imgData.data.set(iColorConv());
+  // imgData.data.set(applyChromaticAberration(imgData.data));
+  imgData.data.set(applyNoise(imgData.data));
+  // imgData.data.set(applyScanlines(imgData.data, WIDTH, HEIGHT));
+  
   ctx.putImageData(imgData, 0, 0)
   // for (let i = 0; i < imgData.data.length; i++) {
   //   imgData.data[i] = 50;
@@ -78,7 +85,7 @@ setInterval(() => {
   // gameTick();
   renderFrame();
   // console.log('frame rendered');
-}, 1);
+}, 10);
 
 
 // // listen for keys
