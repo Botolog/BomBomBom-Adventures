@@ -7,8 +7,9 @@ import {
   EntityManager,
   Flags,
   Ctx,
-  iColorConv
-} from "./utils";
+  iColorConv,
+  Scene
+} from "./Engine";
 // import { sleep } from 'as-sleep';
 
 export {iColorConv};
@@ -24,55 +25,58 @@ export let DRAW_HITBOXES: boolean = true;
 
 export let CameraPosition: Vector2 = new Vector2(0, 0);
 
-export let CTX: Ctx = new Ctx(width, height);
-export let CANVAS: Canvas = new Canvas(CTX);
-export let ENTITY_MANAGER: EntityManager = new EntityManager();
-export let CAMERA: Camera = new Camera();
-CAMERA.coordinates.set(CameraPosition);
 
-export let GROUND: Entity = new Entity();
-GROUND.body.width = CTX.width * 10;
-GROUND.body.height = 100;
-GROUND.body.coordinates.set(new Vector2(5, -93));
-GROUND.staticObj = true;
-GROUND.body.friction = new Vector2(0.9, 0.88)
-GROUND.addFlag(Flags.GROUND);
+let lvl0 = new Scene(0)
+lvl0.newEntity();
 
-let obs: Entity = new Entity();
-obs.body.width = 100;
-obs.body.height = 100;
-obs.body.gravity.set(new Vector2(0, -0.2));
-obs.body.coordinates.set(new Vector2(50, 30));
-obs.body.friction = new Vector2(0.9, 0.88)
-obs.staticObj = true;
-obs.addFlag(Flags.GROUND);
 
-let obs1: Entity = new Entity();
-obs1.body.width = 100;
-obs1.body.height = 100;
-obs1.body.gravity.set(new Vector2(0, -0.2));
-obs1.body.coordinates.set(new Vector2(150+180, 30));
-obs1.body.friction = new Vector2(0.9, 0.8)
-obs1.staticObj = true;
-obs1.addFlag(Flags.GROUND);
+// export let ENTITY_MANAGER: EntityManager = new EntityManager();
+// export let CAMERA: Camera = new Camera();
+// CAMERA.body.coordinates.set(CameraPosition);
 
-let obs2: Entity = new Entity();
-obs2.body.width = 100;
-obs2.body.height = 100;
-obs2.body.gravity.set(new Vector2(0, -0.2));
-obs2.body.coordinates.set(new Vector2(150+180+100+180, 0));
-obs2.body.friction = new Vector2(0.9, 0.8)
-obs2.staticObj = true;
-obs2.addFlag(Flags.GROUND);
+// export let GROUND: Entity = new Entity();
+// GROUND.body.width = CTX.width * 10;
+// GROUND.body.height = 100;
+// GROUND.body.coordinates.set(new Vector2(5, -93));
+// GROUND.staticObj = true;
+// GROUND.body.friction = new Vector2(0.9, 0.88)
+// GROUND.addFlag(Flags.GROUND);
 
-export let Me: Entity = new Entity();
-Me.body.width = 20; 
-Me.body.height = 20;
-Me.body.gravity.set(new Vector2(0, -0.25));
-// Me.body.velocity.y = -10;
-Me.body.drag = new Vector2(0.9, 0.99);
-Me.body.coordinates.y = 50;
-Me.speedLim = 10;
+// let obs: Entity = new Entity();
+// obs.body.width = 100;
+// obs.body.height = 100;
+// obs.body.gravity.set(new Vector2(0, -0.2));
+// obs.body.coordinates.set(new Vector2(50, 30));
+// obs.body.friction = new Vector2(0.9, 0.88)
+// obs.staticObj = true;
+// obs.addFlag(Flags.GROUND);
+
+// let obs1: Entity = new Entity();
+// obs1.body.width = 100;
+// obs1.body.height = 100;
+// obs1.body.gravity.set(new Vector2(0, -0.2));
+// obs1.body.coordinates.set(new Vector2(150+180, 30));
+// obs1.body.friction = new Vector2(0.9, 0.8)
+// obs1.staticObj = true;
+// obs1.addFlag(Flags.GROUND);
+
+// let obs2: Entity = new Entity();
+// obs2.body.width = 100;
+// obs2.body.height = 100;
+// obs2.body.gravity.set(new Vector2(0, -0.2));
+// obs2.body.coordinates.set(new Vector2(150+180+100+180, 0));
+// obs2.body.friction = new Vector2(0.9, 0.8)
+// obs2.staticObj = true;
+// obs2.addFlag(Flags.GROUND);
+
+// export let Me: Entity = new Entity();
+// Me.body.width = 20; 
+// Me.body.height = 20;
+// Me.body.gravity.set(new Vector2(0, -0.25));
+// // Me.body.velocity.y = -10;
+// Me.body.drag = new Vector2(0.9, 0.99);
+// Me.body.coordinates.y = 50;
+// Me.speedLim = 10;
 // export { Vector2.multiply, Flags };
 
 // export let temp:void = Vector2.
@@ -89,12 +93,11 @@ export function keyInput(inputKeys: string[]): void{
   if (inputKeys.includes("s")) Me.control(0, -0.2);
   // if (inputKeys.includes(" ")) jump();
   if (inputKeys.includes("q")) gameTick();
+  // CAMERA.forceCenterCam(Me.body.coordinates)
 }
 
-
-
 export function genFrame(): void {
-  CANVAS.render();
+  lvl0.render();
 
 }
 
@@ -103,18 +106,18 @@ export function genFrame(): void {
 //   Me.body.velocity.addV(new Vector2(x, y))
 // }
 
-export function gameTick(dt: number=0): void {
-  ENTITY_MANAGER.update(dt);
-}
+// export function gameTick(dt: number=0): void {
+//   ENTITY_MANAGER.update(dt);
+// }
 
 
 export function getCtx(): Uint32Array {
   return CTX.frame();
 }
 
-export function moveCam(x: number, y: number): void {
-  CAMERA.move(new Vector2(x, y));
-}
+// export function moveCam(x: number, y: number): void {
+//   CAMERA.move(new Vector2(x, y));
+// }
 
 export function sc(): void{
   console.log(Me.body.sideCollide(obs.body).toString());
