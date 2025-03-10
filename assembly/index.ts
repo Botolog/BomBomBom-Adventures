@@ -1,3 +1,5 @@
+export var width: number = 500;
+export var height: number = 200;
 
 import {
   Canvas,
@@ -8,7 +10,9 @@ import {
   Flags,
   Ctx,
   iColorConv,
-  Scene
+  Scene,
+  SCENEMANAGER,
+  SceneManager
 } from "./Engine";
 // import { sleep } from 'as-sleep';
 
@@ -17,8 +21,6 @@ export {iColorConv};
 // export let width: number = 1000;
 // export let height: number = 450;
 
-export let width: number = 500;
-export let height: number = 200;
 
 export const INTERVAL: number = 20;
 export let DRAW_HITBOXES: boolean = true;
@@ -27,7 +29,9 @@ export let CameraPosition: Vector2 = new Vector2(0, 0);
 
 
 let lvl0 = new Scene(0)
-lvl0.newEntity();
+// lvl0.newEntity();
+SCENEMANAGER.addScene(lvl0);
+SCENEMANAGER.selectScene(0);
 
 
 // export let ENTITY_MANAGER: EntityManager = new EntityManager();
@@ -35,12 +39,13 @@ lvl0.newEntity();
 // CAMERA.body.coordinates.set(CameraPosition);
 
 // export let GROUND: Entity = new Entity();
-// GROUND.body.width = CTX.width * 10;
-// GROUND.body.height = 100;
-// GROUND.body.coordinates.set(new Vector2(5, -93));
-// GROUND.staticObj = true;
-// GROUND.body.friction = new Vector2(0.9, 0.88)
-// GROUND.addFlag(Flags.GROUND);
+let GROUND = lvl0.newBody()
+GROUND.width = width * 10;
+GROUND.height = 100;
+GROUND.coordinates.set(new Vector2(5, -93));
+GROUND.staticObj = true;
+GROUND.friction = new Vector2(0.9, 0.88)
+GROUND.addFlag(Flags.GROUND);
 
 // let obs: Entity = new Entity();
 // obs.body.width = 100;
@@ -70,16 +75,25 @@ lvl0.newEntity();
 // obs2.addFlag(Flags.GROUND);
 
 // export let Me: Entity = new Entity();
-// Me.body.width = 20; 
-// Me.body.height = 20;
-// Me.body.gravity.set(new Vector2(0, -0.25));
-// // Me.body.velocity.y = -10;
-// Me.body.drag = new Vector2(0.9, 0.99);
-// Me.body.coordinates.y = 50;
-// Me.speedLim = 10;
+let Me: Entity = SCENEMANAGER.noScene.newEntity();
+Me.body.width = 20; 
+Me.body.height = 20;
+Me.body.gravity.set(new Vector2(0, -0.25));
+// Me.body.velocity.y = -10;
+Me.body.drag = new Vector2(0.9, 0.99);
+Me.body.coordinates.y = 50;
+Me.body.speedLim = 10;
+
+lvl0.addEntity(Me);
+
+
+// Me.body.scripts.push(((T)=>{T.addFlag(Flags.SCRIPT)}))
 // export { Vector2.multiply, Flags };
 
 // export let temp:void = Vector2.
+
+
+
 
 
 export function keyInput(inputKeys: string[]): void{
@@ -97,7 +111,8 @@ export function keyInput(inputKeys: string[]): void{
 }
 
 export function genFrame(): void {
-  lvl0.render();
+  // lvl0.camera.forceCenterCam(Me.body.center());
+  SCENEMANAGER.render();
 
 }
 
@@ -106,19 +121,19 @@ export function genFrame(): void {
 //   Me.body.velocity.addV(new Vector2(x, y))
 // }
 
-// export function gameTick(dt: number=0): void {
-//   ENTITY_MANAGER.update(dt);
-// }
+export function gameTick(dt: number=1): void {
+  SCENEMANAGER.update(dt);
+}
 
 
 export function getCtx(): Uint32Array {
-  return CTX.frame();
+  return SCENEMANAGER.currentScene.camera.canvas.ctx.frame();
 }
 
-// export function moveCam(x: number, y: number): void {
-//   CAMERA.move(new Vector2(x, y));
+export function moveCam(x: number, y: number): void {
+  SCENEMANAGER.currentScene.camera.move(new Vector2(x, y));
+}
+
+// export function sc(): void{
+//   console.log(Me.body.sideCollide(obs.body).toString());
 // }
-
-export function sc(): void{
-  console.log(Me.body.sideCollide(obs.body).toString());
-}

@@ -6,7 +6,7 @@ import {
   width,
   iColorConv,
   keyInput,
-  sc
+  // sc
 } from "./build/release.js";
 
 import { applyNoise, applyChromaticAberration, applyScanlines } from "./effects.js";
@@ -85,7 +85,7 @@ setInterval(() => {
   // gameTick();
   renderFrame();
   // console.log('frame rendered');
-}, 10);
+}, 1);
 
 
 // // listen for keys

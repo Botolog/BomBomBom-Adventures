@@ -6,6 +6,9 @@ import {
     height,
 } from "./index";
 
+const Width: number = width;
+const Height: number = height;
+
 export enum Direction {
     NONE = -1,
     LEFT = 0,
@@ -17,7 +20,8 @@ export enum Direction {
 export enum Flags {
     ANY = -1,
     GROUND = 0,
-    CHARACTER = 1
+    CHARACTER = 1,
+    SCRIPT = 2
 }
 
 class Hitbox { x1!: number; y1!: number; x2!: number; y2!: number; }
@@ -143,18 +147,6 @@ export function iColor(R: i32, G: i32, B: i32, A: i32 = 255): i32 {
 //     return frame;
 // }
 
-export function iColorConv(): Uint8ClampedArray {
-    const iframe: Uint32Array = CTX.frame();
-    const frameLength: i32 = iframe.length * Uint32Array.BYTES_PER_ELEMENT;
-    const frameBuffer: ArrayBuffer = new ArrayBuffer(frameLength);
-    const frame: Uint8ClampedArray = Uint8ClampedArray.wrap(frameBuffer);
-    memory.copy(
-        changetype<usize>(frame.buffer),
-        changetype<usize>(iframe.buffer),
-        frameLength
-    );
-    return frame;
-}
 
 // export function iColor2Color(color: i32): 
 
@@ -229,8 +221,6 @@ export class Ctx {
     frame(): Uint32Array {
         return this.buffer;
     }
-
-
 }
 
 export class Canvas {
@@ -264,6 +254,24 @@ export class Canvas {
     }
 }
 
+
+export var CTX: Ctx = new Ctx(Width, Height);
+export var CANVAS: Canvas = new Canvas(CTX);
+
+
+export function iColorConv(): Uint8ClampedArray {
+    const iframe: Uint32Array = CTX.frame();
+    const frameLength: i32 = iframe.length * Uint32Array.BYTES_PER_ELEMENT;
+    const frameBuffer: ArrayBuffer = new ArrayBuffer(frameLength);
+    const frame: Uint8ClampedArray = Uint8ClampedArray.wrap(frameBuffer);
+    memory.copy(
+        changetype<usize>(frame.buffer),
+        changetype<usize>(iframe.buffer),
+        frameLength
+    );
+    return frame;
+}
+
 export class Body {
     width: number;
     height: number;
@@ -278,8 +286,9 @@ export class Body {
     flags: Flags[] = [];
     toRender: bool = true;
     speedLim: number = 20;
+    scripts: ((T:Body)=>void)[] = [];
 
-    constructor(width: number = 0, height: number = 0, manager: BodyManager) {
+    constructor(manager: BodyManager, width: number = 0, height: number = 0) {
         this.width = width;
         this.height = height;
         this.coordinates = new Vector2();
@@ -288,6 +297,7 @@ export class Body {
         this.drag = new Vector2(0.5, 0.9);
         this.manager = manager;
         this.manager.addBody(this);
+        
     }
 
     hitbox(): Hitbox {
@@ -297,6 +307,11 @@ export class Body {
             x2: this.coordinates.x + this.width,
             y2: this.coordinates.y + this.height
         };
+    }
+
+    center(): Vector2 {
+        let h = this.hitbox();
+        return new Vector2((h.x1+h.x2)/2, (h.y1+h.y2)/2);
     }
 
 
@@ -373,7 +388,37 @@ export class Body {
         return mod;
     }
 
-    update(dt: number) {
+    jump(): void {
+        const vj = 3;
+        const hj = 13;
+        let colds = this.manager.sidesThatCollides(this, Flags.GROUND);
+        if (colds.length > 0) {
+            if (colds.includes(Direction.UP)) return;
+            if (colds.includes(Direction.RIGHT)) {
+                this.coordinates.x -= 3;
+                this.velocity.y = vj;
+                this.velocity.x = -hj;
+            }
+            if (colds.includes(Direction.LEFT)) {
+                this.coordinates.x += 3;
+                this.velocity.y = vj;
+                this.velocity.x = hj;
+            }
+            if (colds.includes(Direction.DOWN)) {
+                this.coordinates.y += 3;
+                this.velocity.y = 7;
+            }
+            // console.log("jumped");
+        }
+    }
+
+    exeScripts(): void {
+        for (let i=0; i<this.scripts.length; i++){
+            this.scripts[i](this);
+        }
+    }
+
+    update(dt: number): void {
         if (this.staticObj) return;
 
         this.velocity.addV(this.gravity.CmultiplyS(dt));
@@ -446,10 +491,11 @@ export class Entity {
     flags: Flags[];
     toRender: bool = true;
     staticObj: bool = false;
+    scripts: ((T:Entity)=>void)[] = [];
 
     constructor(Emanager: EntityManager, Bmanager: BodyManager) {
         // this.canvas = CANVAS;
-        this.body = new Body(0, 0, Bmanager);
+        this.body = new Body(Bmanager, 0, 0);
         this.manager = Emanager;
         this.flags = [];
         this.manager.addEntity(this);
@@ -479,7 +525,11 @@ export class Entity {
         }
     }
 
-
+    exeScripts(): void {
+        for (let i=0; i<this.scripts.length; i++){
+            this.scripts[i](this);
+        }
+    }
 
     update(dt: number): void {
         if (this.staticObj) return;
@@ -489,7 +539,7 @@ export class Entity {
     control(x: number, y: number): void {
         if (this.manager.collidesWithSomething(this).length == 0) x *= 0.7
         this.body.velocity.addV(new Vector2(x, y));
-        if (y > 0) this.jump();
+        if (y > 0) this.body.jump();
     }
 
     addFlag(flag: Flags): void {
@@ -534,6 +584,7 @@ export class Camera extends Entity {
     constructor(Emanager: EntityManager, Bmanager: BodyManager) {
         super(Emanager, Bmanager);
         this.body.hasHitbox = false;
+        // this.canvas = new Canvas(new Ctx(width, height));
     }
 
     public move(vector: Vector2): void {
@@ -551,9 +602,9 @@ export class Camera extends Entity {
         )
     }
 
-    override render(): void {
+    // render(): void {
 
-    }
+    // }
 
     //// TODo make zoom in and out (scaling)
     //TODO: make camera tracking (with pos and with velocity)
@@ -611,8 +662,8 @@ export class EntityManager {
     scene: Scene;
 
     constructor(scene: Scene) {
-        this.scene = scene;
         this.entities = [];
+        this.scene = scene;
     }
 
     addEntity(entity: Entity): void {
@@ -653,22 +704,35 @@ export class EntityManager {
 }
 
 export class Scene {
-    manager = SCENEMANAGER;
-    entityManager = new EntityManager(this);
-    bodyManager = new BodyManager(this)
-    camera = new Camera(this.entityManager, this.bodyManager);
+    // manager: SceneManager;
+    entityManager: EntityManager = new EntityManager(this);
+    bodyManager: BodyManager = new BodyManager(this);
+    camera: Camera = new Camera(this.entityManager, this.bodyManager);
     ID: i32;
     constructor(ID: i32) {
         this.ID = ID;
+        // this.manager = SCENEMANAGER;
+        // this.entityManager = new EntityManager(this);
+        // this.bodyManager = new BodyManager(this);
+        // let cam = new Camera(this.entityManager, this.bodyManager);
+        // this.camera = new Camera(this.entityManager, this.bodyManager)
+    }
+
+    addEntity(entity: Entity): void {
+        entity.manager = this.entityManager;
+        this.entityManager.addEntity(entity);
+        entity.body.manager = this.bodyManager;
+        this.bodyManager.addBody(entity.body);
     }
 
     newEntity(): Entity {
         return new Entity(this.entityManager, this.bodyManager);
         // this.entityManager.addEntity()
+        
     }
 
-    newBody(): Body {
-        return new Body(0, 0, this.bodyManager)
+    newBody(width:number=0, height:number=0): Body {
+        return new Body(this.bodyManager, width, height);
     }
 
     update(dt: number = 0): void {
@@ -678,6 +742,7 @@ export class Scene {
     }
 
     render(): void {
+        this.camera.canvas.ctx.clear();
         this.entityManager.render(this.camera.body.coordinates);
         this.bodyManager.render(this.camera.body.coordinates);
     }
@@ -685,17 +750,23 @@ export class Scene {
 
 export class SceneManager {
     scenes: Scene[] = [];
-    currentScene: Scene;
+    noScene: Scene = new Scene(-1);
+    currentScene: Scene = this.noScene;
 
     constructor() {
-        this.currentScene = new Scene(-1);
+        // this.currentScene = this.noScene;
     }
 
-    findScene(ID: i32): Scene | void {
+    findScene(ID: i32): Scene {
         for (let i = 0; i < this.scenes.length; i++) {
             if (this.scenes[i].ID == ID)
                 return this.scenes[i];
         }
+        return this.currentScene;
+    }
+
+    addScene(scene: Scene): void {
+        this.scenes.push(scene);
     }
 
     selectScene(ID: i32): Scene {
@@ -707,13 +778,13 @@ export class SceneManager {
         this.currentScene.update(dt);
     }
 
-    render(){
+    render(): void {
         this.currentScene.render();
     }
 
 }
 
 
-export let SCENEMANAGER = new SceneManager()
-export let CTX: Ctx = new Ctx(width, height);
-export let CANVAS: Canvas = new Canvas(CTX);
+
+
+export var SCENEMANAGER: SceneManager = new SceneManager();

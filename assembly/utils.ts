@@ -1,1 +1,7 @@
-import * as Engine from "./Engine";
+import * as E from "./Engine";
+
+
+
+class Player {
+    
+}
