@@ -1,5 +1,5 @@
-export var width: number = 500;
-export var height: number = 200;
+export var width: number = 600;
+export var height: number = 300;
 
 import {
   Canvas,
@@ -92,26 +92,32 @@ lvl0.addEntity(Me);
 
 // export let temp:void = Vector2.
 
+lvl0.newObs(100, 100, 100, 100);
+lvl0.newObs(300, 100, 100, 100);
 
 
 
 
 export function keyInput(inputKeys: string[]): void{
-  if (inputKeys.includes("ArrowLeft")) moveCam(-5, 0);
-  if (inputKeys.includes("ArrowRight")) moveCam(5, 0);
-  if (inputKeys.includes("ArrowUp")) moveCam(0, 5);
-  if (inputKeys.includes("ArrowDown")) moveCam(0, -5);
-  if (inputKeys.includes("a")) Me.control(-1, 0);
-  if (inputKeys.includes("d")) Me.control(1, 0);
-  if (inputKeys.includes("w")) Me.control(0, 0.02);
-  if (inputKeys.includes("s")) Me.control(0, -0.2);
+  if (inputKeys.includes("k")) moveCam(-15, 0);
+  if (inputKeys.includes(";")) moveCam(15, 0);
+  if (inputKeys.includes("o")) moveCam(0, 15);
+  if (inputKeys.includes("l")) moveCam(0, -15);
+  if (inputKeys.includes("ArrowLeft")) Me.control(-1, 0);
+  if (inputKeys.includes("ArrowRight")) Me.control(1, 0);
+  if (inputKeys.includes("ArrowUp")) Me.control(0, 0.02);
+  if (inputKeys.includes("ArrowDown")) Me.control(0, -0.2);
+  // if (inputKeys.includes("a")) Me.control(-1, 0);
+  // if (inputKeys.includes("d")) Me.control(1, 0);
+  // if (inputKeys.includes("w")) Me.control(0, 0.02);
+  // if (inputKeys.includes("s")) Me.control(0, -0.2);
   // if (inputKeys.includes(" ")) jump();
   if (inputKeys.includes("q")) gameTick();
   // CAMERA.forceCenterCam(Me.body.coordinates)
 }
 
 export function genFrame(): void {
-  // lvl0.camera.forceCenterCam(Me.body.center());
+  SCENEMANAGER.currentScene.camera.centerCam(Me.body.center());
   SCENEMANAGER.render();
 
 }

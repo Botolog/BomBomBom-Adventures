@@ -26,14 +26,14 @@ export enum Flags {
 
 class Hitbox { x1!: number; y1!: number; x2!: number; y2!: number; }
 
-export class Properties {
-    speed: object = {
-        up: 0.25,
-        down: 0,
-        right: 1,
-        left: 1,
-    }
-}
+// export class Properties {
+//     speed: object = {
+//         up: 0.25,
+//         down: 0,
+//         right: 1,
+//         left: 1,
+//     }
+// }
 
 function min4(a: number, b: number, c: number, d: number): number {
     return min(min(a, b), min(c, d));
@@ -95,6 +95,12 @@ export class Vector2 {
 
     CaddV(vector: Vector2): Vector2 {
         return new Vector2(this.x + vector.x, this.y + vector.y);
+    }
+
+    abs(): Vector2 {
+        this.x = abs(this.x);
+        this.y = abs(this.y);
+        return this;
     }
 
     absMin(lim: number): Vector2 {
@@ -488,10 +494,12 @@ export class Entity {
     // canvas: Canvas;
     body: Body;
     manager: EntityManager;
+    // properties: Properties = new Properties();
     flags: Flags[];
     toRender: bool = true;
     staticObj: bool = false;
     scripts: ((T:Entity)=>void)[] = [];
+    facingRight: bool = false;
 
     constructor(Emanager: EntityManager, Bmanager: BodyManager) {
         // this.canvas = CANVAS;
@@ -537,6 +545,7 @@ export class Entity {
     }
 
     control(x: number, y: number): void {
+        this.facingRight = x>0
         if (this.manager.collidesWithSomething(this).length == 0) x *= 0.7
         this.body.velocity.addV(new Vector2(x, y));
         if (y > 0) this.body.jump();
@@ -577,6 +586,7 @@ export class Entity {
 }
 
 
+
 export class Camera extends Entity {
     // coordinates: Vector2;
     canvas: Canvas = CANVAS;
@@ -592,14 +602,19 @@ export class Camera extends Entity {
     }
 
     centerCam(target: Vector2): void {
-
+        let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5)
+        let dif = target.CaddV(this.body.center().CmultiplyS(-1))
+        dif.addV(center);
+        dif.multiplyS(0.2);
+        // this.body.center().
+        this.body.velocity.set(dif);
+        // console.log(dif.toString());
+        
     }
 
     forceCenterCam(target: Vector2): void {
         let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5)
-        this.body.coordinates.set(
-            target.CaddV(center)
-        )
+        this.body.coordinates.set(target.CaddV(center));
     }
 
     // render(): void {
@@ -733,6 +748,15 @@ export class Scene {
 
     newBody(width:number=0, height:number=0): Body {
         return new Body(this.bodyManager, width, height);
+    }
+
+    newObs(x:number, y:number, width:number, height:number): Body {
+        let obj = this.newBody(width, height);
+        obj.coordinates.x = x; obj.coordinates.y = y;
+        obj.staticObj = true;
+        obj.friction.set(new Vector2(0.9, 0.88));
+        obj.addFlag(Flags.GROUND);
+        return obj;
     }
 
     update(dt: number = 0): void {
