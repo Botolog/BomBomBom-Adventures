@@ -94,6 +94,7 @@ lvl0.addEntity(Me);
 
 lvl0.newObs(100, 100, 100, 100);
 lvl0.newObs(300, 100, 100, 100);
+lvl0.newObs(500, 100, 100, 100).hasHitbox = false;
 
 
 

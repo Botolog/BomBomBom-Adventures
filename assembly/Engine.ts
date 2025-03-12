@@ -24,7 +24,7 @@ export enum Flags {
     SCRIPT = 2
 }
 
-class Hitbox { x1!: number; y1!: number; x2!: number; y2!: number; }
+export class Hitbox { x1!: number; y1!: number; x2!: number; y2!: number; }
 
 // export class Properties {
 //     speed: object = {
@@ -394,29 +394,29 @@ export class Body {
         return mod;
     }
 
-    jump(): void {
-        const vj = 3;
-        const hj = 13;
-        let colds = this.manager.sidesThatCollides(this, Flags.GROUND);
-        if (colds.length > 0) {
-            if (colds.includes(Direction.UP)) return;
-            if (colds.includes(Direction.RIGHT)) {
-                this.coordinates.x -= 3;
-                this.velocity.y = vj;
-                this.velocity.x = -hj;
-            }
-            if (colds.includes(Direction.LEFT)) {
-                this.coordinates.x += 3;
-                this.velocity.y = vj;
-                this.velocity.x = hj;
-            }
-            if (colds.includes(Direction.DOWN)) {
-                this.coordinates.y += 3;
-                this.velocity.y = 7;
-            }
-            // console.log("jumped");
-        }
-    }
+    // jump(): void {
+    //     const vj = 3;
+    //     const hj = 13;
+    //     let colds = this.manager.sidesThatCollides(this, Flags.GROUND);
+    //     if (colds.length > 0) {
+    //         if (colds.includes(Direction.UP)) return;
+    //         if (colds.includes(Direction.RIGHT)) {
+    //             this.coordinates.x -= 3;
+    //             this.velocity.y = vj;
+    //             this.velocity.x = -hj;
+    //         }
+    //         if (colds.includes(Direction.LEFT)) {
+    //             this.coordinates.x += 3;
+    //             this.velocity.y = vj;
+    //             this.velocity.x = hj;
+    //         }
+    //         if (colds.includes(Direction.DOWN)) {
+    //             this.coordinates.y += 3;
+    //             this.velocity.y = 7;
+    //         }
+    //         // console.log("jumped");
+    //     }
+    // }
 
     exeScripts(): void {
         for (let i=0; i<this.scripts.length; i++){
@@ -426,6 +426,7 @@ export class Body {
 
     update(dt: number): void {
         if (this.staticObj) return;
+
 
         this.velocity.addV(this.gravity.CmultiplyS(dt));
         this.velocity.multiplyV(this.drag.CmultiplyV(this.calcFriction()));
@@ -499,7 +500,7 @@ export class Entity {
     toRender: bool = true;
     staticObj: bool = false;
     scripts: ((T:Entity)=>void)[] = [];
-    facingRight: bool = false;
+    facingRight: bool;
 
     constructor(Emanager: EntityManager, Bmanager: BodyManager) {
         // this.canvas = CANVAS;
@@ -507,23 +508,26 @@ export class Entity {
         this.manager = Emanager;
         this.flags = [];
         this.manager.addEntity(this);
+        this.facingRight = true;
     }
 
     jump(): void {
         const vj = 3;
         const hj = 13;
-        let colds = this.manager.sidesThatCollides(this, Flags.GROUND);
+        let colds = this.body.manager.sidesThatCollides(this.body, Flags.GROUND);
         if (colds.length > 0) {
             if (colds.includes(Direction.UP)) return;
             if (colds.includes(Direction.RIGHT)) {
                 this.body.coordinates.x -= 3;
                 this.body.velocity.y = vj;
                 this.body.velocity.x = -hj;
+                this.facingRight=false;
             }
             if (colds.includes(Direction.LEFT)) {
                 this.body.coordinates.x += 3;
                 this.body.velocity.y = vj;
                 this.body.velocity.x = hj;
+                this.facingRight=true;
             }
             if (colds.includes(Direction.DOWN)) {
                 this.body.coordinates.y += 3;
@@ -537,18 +541,22 @@ export class Entity {
         for (let i=0; i<this.scripts.length; i++){
             this.scripts[i](this);
         }
+        
+        
     }
 
     update(dt: number): void {
         if (this.staticObj) return;
+        this.exeScripts()
         // this.body.update(dt);
     }
 
     control(x: number, y: number): void {
-        this.facingRight = x>0
+        if(abs(x)>0.1) this.facingRight = x>0;
+        console.log(this.facingRight.toString())
         if (this.manager.collidesWithSomething(this).length == 0) x *= 0.7
         this.body.velocity.addV(new Vector2(x, y));
-        if (y > 0) this.body.jump();
+        if (y > 0) this.jump();
     }
 
     addFlag(flag: Flags): void {
@@ -621,8 +629,8 @@ export class Camera extends Entity {
 
     // }
 
-    //// TODo make zoom in and out (scaling)
-    //TODO: make camera tracking (with pos and with velocity)
+    // TODO: make zoom in and out (scaling) (hard)
+    
 }
 
 
