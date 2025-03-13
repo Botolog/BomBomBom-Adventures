@@ -159,23 +159,30 @@ export function iColor(R: i32, G: i32, B: i32, A: i32 = 255): i32 {
 export class Ctx {
     width: number;
     height: number;
+    scaleK: number = 1;
     buffer: Uint32Array;
     background: i32 = iColor(50, 50, 100);
 
 
     constructor(width: number, height: number) {
-        this.width = width;
-        this.height = height;
+        this.width = (width);
+        this.height = (height);
         let size: i32 = (i32)(width * height);
         this.buffer = new Uint32Array(size);
         // this.clear();
     }
     resize(width: number, height: number): void {
-        this.width = width;
-        this.height = height;
+        this.width = (i32)(width);
+        this.height = (i32)(height);
         let size: i32 = (i32)(width * height);
         this.buffer = new Uint32Array(size);
         this.clear();
+    }
+
+    scale(k: number): void {
+        this.scaleK = k;
+        
+        // this.resize(this.width, this.height);
     }
 
     // setPixel(x: number, y: number, color: Color): void {
@@ -188,14 +195,17 @@ export class Ctx {
     // }
 
     setiPixel(x: number, y: number, icolor: i32): void {
+        // x *= this.scaleK; y *= this.scaleK;
         let index = (i32)((y * this.width + x));
+        if (index >= this.buffer.length) return;
         if (x < 0 || y < 0 || x >= this.width || y >= this.height) return; // Bounds check
         // if (index < 0 || index >= this.buffer.length) return ;
         this.buffer[index] = icolor;
     }
 
     fillRect(x: number, y: number, w: number, h: number, color: i32): void {
-        x = (i32)(x); y = (i32)(y); w = (i32)(w); h = (i32)(h)
+        // x = (i32)(x); y = (i32)(y); w = (i32)(w); h = (i32)(h)
+        x = (i32)(x*this.scaleK); y = (i32)(y*this.scaleK); w = (i32)(w*this.scaleK); h = (i32)(h*this.scaleK)
         for (let i = x; i < x + w; i++) {
             for (let j = y; j < y + h; j++) {
                 // this.setPixel(i, j, color);
@@ -204,7 +214,8 @@ export class Ctx {
         }
     }
     drawRect(x: number, y: number, w: number, h: number, color: i32): void {
-        x = (i32)(x); y = (i32)(y); w = (i32)(w); h = (i32)(h)
+        // x = (i32)(x); y = (i32)(y); w = (i32)(w); h = (i32)(h)
+        x = (i32)(x*this.scaleK); y = (i32)(y*this.scaleK); w = (i32)(w*this.scaleK); h = (i32)(h*this.scaleK)
         for (let i = x; i < x + w; i++) {
             this.setiPixel(i, y, color);
             this.setiPixel(i, y + h - 1, color);
@@ -215,7 +226,7 @@ export class Ctx {
         }
     }
     clear(): void {
-        this.fillRect(0, 0, this.width, this.height, this.background)
+        this.fillRect(0, 0, this.width/this.scaleK, this.height/this.scaleK, this.background)
         // for (let i = 0; i < this.buffer.length; i += 4) {
         //     this.buffer[i] = 0;
         //     this.buffer[i + 1] = 0;
@@ -292,7 +303,7 @@ export class Body {
     flags: Flags[] = [];
     toRender: bool = true;
     speedLim: number = 20;
-    scripts: ((T:Body)=>void)[] = [];
+    scripts: ((T: Body) => void)[] = [];
 
     constructor(manager: BodyManager, width: number = 0, height: number = 0) {
         this.width = width;
@@ -303,7 +314,7 @@ export class Body {
         this.drag = new Vector2(0.5, 0.9);
         this.manager = manager;
         this.manager.addBody(this);
-        
+
     }
 
     hitbox(): Hitbox {
@@ -317,12 +328,12 @@ export class Body {
 
     center(): Vector2 {
         let h = this.hitbox();
-        return new Vector2((h.x1+h.x2)/2, (h.y1+h.y2)/2);
+        return new Vector2((h.x1 + h.x2) / 2, (h.y1 + h.y2) / 2);
     }
 
 
     collide(another: Body): bool {
-        if (!this.hasHitbox) return false;
+        if (!this.hasHitbox || !another.hasHitbox) return false;
         const hitbox1 = this.hitbox();
         const hitbox2 = another.hitbox();
 
@@ -335,7 +346,7 @@ export class Body {
     }
 
     sideCollide(another: Body): Direction {
-        if (!this.hasHitbox) return Direction.NONE;
+        if (!this.hasHitbox || !another.hasHitbox) return Direction.NONE;
         const a = this.hitbox();
         const b = another.hitbox();
 
@@ -419,7 +430,7 @@ export class Body {
     // }
 
     exeScripts(): void {
-        for (let i=0; i<this.scripts.length; i++){
+        for (let i = 0; i < this.scripts.length; i++) {
             this.scripts[i](this);
         }
     }
@@ -499,7 +510,7 @@ export class Entity {
     flags: Flags[];
     toRender: bool = true;
     staticObj: bool = false;
-    scripts: ((T:Entity)=>void)[] = [];
+    scripts: ((T: Entity) => void)[] = [];
     facingRight: bool;
 
     constructor(Emanager: EntityManager, Bmanager: BodyManager) {
@@ -521,13 +532,13 @@ export class Entity {
                 this.body.coordinates.x -= 3;
                 this.body.velocity.y = vj;
                 this.body.velocity.x = -hj;
-                this.facingRight=false;
+                this.facingRight = false;
             }
             if (colds.includes(Direction.LEFT)) {
                 this.body.coordinates.x += 3;
                 this.body.velocity.y = vj;
                 this.body.velocity.x = hj;
-                this.facingRight=true;
+                this.facingRight = true;
             }
             if (colds.includes(Direction.DOWN)) {
                 this.body.coordinates.y += 3;
@@ -538,11 +549,11 @@ export class Entity {
     }
 
     exeScripts(): void {
-        for (let i=0; i<this.scripts.length; i++){
+        for (let i = 0; i < this.scripts.length; i++) {
             this.scripts[i](this);
         }
-        
-        
+
+
     }
 
     update(dt: number): void {
@@ -552,7 +563,7 @@ export class Entity {
     }
 
     control(x: number, y: number): void {
-        if(abs(x)>0.1) this.facingRight = x>0;
+        if (abs(x) > 0.1) this.facingRight = x > 0;
         console.log(this.facingRight.toString())
         if (this.manager.collidesWithSomething(this).length == 0) x *= 0.7
         this.body.velocity.addV(new Vector2(x, y));
@@ -610,18 +621,18 @@ export class Camera extends Entity {
     }
 
     centerCam(target: Vector2): void {
-        let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5)
+        let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5/CTX.scaleK)
         let dif = target.CaddV(this.body.center().CmultiplyS(-1))
         dif.addV(center);
         dif.multiplyS(0.2);
-        // this.body.center().
+        // this.body.center()
         this.body.velocity.set(dif);
         // console.log(dif.toString());
-        
+
     }
 
     forceCenterCam(target: Vector2): void {
-        let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5)
+        let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5/CTX.scaleK)
         this.body.coordinates.set(target.CaddV(center));
     }
 
@@ -629,8 +640,7 @@ export class Camera extends Entity {
 
     // }
 
-    // TODO: make zoom in and out (scaling) (hard)
-    
+
 }
 
 
@@ -731,6 +741,7 @@ export class Scene {
     entityManager: EntityManager = new EntityManager(this);
     bodyManager: BodyManager = new BodyManager(this);
     camera: Camera = new Camera(this.entityManager, this.bodyManager);
+    ctxScale: number = 1;
     ID: i32;
     constructor(ID: i32) {
         this.ID = ID;
@@ -751,14 +762,14 @@ export class Scene {
     newEntity(): Entity {
         return new Entity(this.entityManager, this.bodyManager);
         // this.entityManager.addEntity()
-        
+
     }
 
-    newBody(width:number=0, height:number=0): Body {
+    newBody(width: number = 0, height: number = 0): Body {
         return new Body(this.bodyManager, width, height);
     }
 
-    newObs(x:number, y:number, width:number, height:number): Body {
+    newObs(x: number, y: number, width: number, height: number): Body {
         let obj = this.newBody(width, height);
         obj.coordinates.x = x; obj.coordinates.y = y;
         obj.staticObj = true;
@@ -803,7 +814,13 @@ export class SceneManager {
 
     selectScene(ID: i32): Scene {
         this.currentScene = this.findScene(ID)!;
+        CTX.scale(this.currentScene.ctxScale)
         return this.currentScene;
+    }
+
+    scaleCtx(k: number): void {
+        this.currentScene.ctxScale = k;
+        CTX.scale(k);
     }
 
     update(dt: number): void {

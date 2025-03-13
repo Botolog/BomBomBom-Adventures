@@ -1,5 +1,5 @@
-export var width: number = 600;
-export var height: number = 300;
+export var width: number = 400;
+export var height: number = 200;
 
 import {
   Canvas,
@@ -12,7 +12,8 @@ import {
   iColorConv,
   Scene,
   SCENEMANAGER,
-  SceneManager
+  SceneManager,
+  CTX
 } from "./Engine";
 // import { sleep } from 'as-sleep';
 
@@ -132,6 +133,11 @@ export function gameTick(dt: number=1): void {
   SCENEMANAGER.update(dt);
 }
 
+export function scaleScreen(k: number):void{
+  // CTX.scale(k);
+  SCENEMANAGER.scaleCtx(k);
+  SCENEMANAGER.currentScene.camera.forceCenterCam(Me.body.center())
+}
 
 export function getCtx(): Uint32Array {
   return SCENEMANAGER.currentScene.camera.canvas.ctx.frame();

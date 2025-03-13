@@ -6,6 +6,7 @@ import {
   width,
   iColorConv,
   keyInput,
+  scaleScreen,
   // sc
 } from "./build/release.js";
 
@@ -79,13 +80,17 @@ function testFPS(timeOfTest, framesToRender=100) {
 }
 
 // setInterval(sc, 10);
-
-setInterval(() => {
-  genFrame();
-  // gameTick();
-  renderFrame();
-  // console.log('frame rendered');
-}, 1);
+setTimeout(() => {
+  scaleScreen(0.5)
+  testFPS(1);
+  
+  setInterval(() => {
+    genFrame();
+    // gameTick();
+    renderFrame();
+    // console.log('frame rendered');
+  }, 1);
+}, 1000);
 
 
 // // listen for keys
@@ -95,11 +100,15 @@ setInterval(() => {
 // });
 
 const keysPressed = new Set();
-
+let s = 50;
 document.addEventListener("keydown", (e) => {
   keysPressed.add(e.key);
+  if (e.key == "-") scaleScreen((--s)/100);
+  if (e.key == "=") scaleScreen((++s)/100);
 });
 
 document.addEventListener("keyup", (e) => {
   keysPressed.delete(e.key);
 });
+
+scaleScreen(s/100)
