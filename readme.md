@@ -102,9 +102,14 @@ for starting the server
 ---
 ##  Project Roadmap
 
-- [X] **`Task 1`**: <strike>Implement feature one.</strike>
-- [ ] **`Task 2`**: Implement feature two.
-- [ ] **`Task 3`**: Implement feature three.
+- [X] **`Task 1`**: <strike>basic hitbox rendering.</strike>
+- [X] **`Task 2`**: <strike>basic phisycs and movement.</strike>
+- [X] **`Task 3`**: <strike>basic camera tracking and scaling.</strike>
+- [X] **`Task 4`**: <strike>basic level creation and menegment.</strike>
+- [ ] **`Task 5`**: Implement textures rendering.
+- [ ] **`Task 6`**: Implement special properties for player.
+- [ ] **`Task 7`**: Implement hp and attacks.
+- [ ] **`Task 8`**: Implement enemies.
 
 ---
 
@@ -116,7 +121,7 @@ for starting the server
 1. **Fork the Repository**: Start by forking the project repository to your LOCAL account.
 2. **Clone Locally**: Clone the forked repository to your local machine using a git client.
    ```sh
-   git clone D:\Ron\Projects\BomBomBom-Adventures
+   git clone https://github.com/Botolog/BomBomBom-Adventures
    ```
 3. **Create a New Branch**: Always work on a new branch, giving it a descriptive name.
    ```sh
@@ -139,8 +144,8 @@ for starting the server
 <summary>Contributor Graph</summary>
 <br>
 <p align="left">
-   <a href="https://LOCAL{/Projects/BomBomBom-Adventures/}graphs/contributors">
-      <img src="https://contrib.rocks/image?repo=Projects/BomBomBom-Adventures">
+   <a href="https://github.com/Botolog/BomBomBom-Adventures/graphs/contributors">
+      <img src="https://contrib.rocks/image?repo=Botolog/BomBomBom-Adventures">
    </a>
 </p>
 </details>
@@ -150,11 +155,5 @@ for starting the server
 ##  License
 
 This project is protected under the [SELECT-A-LICENSE](https://choosealicense.com/licenses) License. For more details, refer to the [LICENSE](https://choosealicense.com/licenses/) file.
-
----
-
-##  Acknowledgments
-
-- List any resources, contributors, inspiration, etc. here.
 
 ---
