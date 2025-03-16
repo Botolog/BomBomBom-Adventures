@@ -82,9 +82,9 @@ function testFPS(timeOfTest, framesToRender=100) {
 }
 
 // setInterval(sc, 10);
-setTimeout(() => {
-  scaleScreen(0.5)
-  testFPS(1);
+// setTimeout(() => {
+//   scaleScreen(0.5)
+//   testFPS(1);
   
   setInterval(() => {
     genFrame();
@@ -92,7 +92,7 @@ setTimeout(() => {
     renderFrame();
     // console.log('frame rendered');
   }, 1);
-}, 1000);
+// }, 1000);
 
 
 // // listen for keys

@@ -1,5 +1,5 @@
-export var width: number = 400;
-export var height: number = 200;
+export var width: number = 500;
+export var height: number = 250;
 
 import {
   Canvas,
