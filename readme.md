@@ -3,7 +3,7 @@
 </p>
 <p align="center"><h1 align="center">BOMBOMBOM-ADVENTURES</h1></p>
 <p align="center">
-	<em><code>> REPLACE-ME</code></em>
+	https://3bom.pages.dev
 </p>
 <p align="center">
 	<!-- local repository, no metadata badges. --></p>
@@ -35,9 +35,15 @@
 
 ---
 
-##  Overview
+## My own game in my own game engine
 
-### My own game in my own game engine
+ keys:
+ 	
+- `Up` `Down` `Left` `Right` - movement
+- `+` `-` / `Scroll` - screen scale
+- `O` `K` `L` `:` - look around
+- ` - x2 game speed (hold)
+ 
 
 ---
 
@@ -112,6 +118,13 @@ for starting the server
 - [ ] **`Task 8`**: Implement enemies.
 
 ---
+
+## Screenshots
+
+![image](https://github.com/user-attachments/assets/af42f892-847e-4441-90ea-c04268bd294c)
+![image](https://github.com/user-attachments/assets/9bc205df-3b46-4963-91ad-98d9ad2ec716)
+![image](https://github.com/user-attachments/assets/b6b36464-c09b-4f5c-a580-e73885c60fa0)
+
 
 ##  Contributing
 
