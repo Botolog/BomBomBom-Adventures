@@ -15,6 +15,7 @@ import {
   SceneManager,
   CTX
 } from "./Engine";
+import { Player } from "./utils";
 // import { sleep } from 'as-sleep';
 
 export {iColorConv};
@@ -76,7 +77,8 @@ GROUND.addFlag(Flags.GROUND);
 // obs2.addFlag(Flags.GROUND);
 
 // export let Me: Entity = new Entity();
-let Me: Entity = SCENEMANAGER.noScene.newEntity();
+// let Me: Entity = SCENEMANAGER.noScene.newEntity();
+let Me: Player = new Player(SCENEMANAGER.noScene.entityManager, SCENEMANAGER.noScene.bodyManager);
 Me.body.width = 20; 
 Me.body.height = 20;
 Me.body.gravity.set(new Vector2(0, -0.25));
@@ -95,7 +97,7 @@ lvl0.addEntity(Me);
 
 lvl0.newObs(100, 100, 100, 100);
 lvl0.newObs(300, 100, 100, 100);
-lvl0.newObs(500, 100, 100, 100).hasHitbox = false;
+lvl0.newObs(500, 100, 100, 100, [Flags.DEATH]).hasHitbox = false;
 
 
 
@@ -113,8 +115,12 @@ export function keyInput(inputKeys: string[]): void{
   // if (inputKeys.includes("d")) Me.control(1, 0);
   // if (inputKeys.includes("w")) Me.control(0, 0.02);
   // if (inputKeys.includes("s")) Me.control(0, -0.2);
-  // if (inputKeys.includes(" ")) jump();
-  if (inputKeys.includes("q")) gameTick();
+  if (inputKeys.includes(" ")) Me.meleeAttack();
+  if (inputKeys.includes("`")) gameTick();
+  // if (inputKeys.includes("q")) console.log(
+
+  //   // SCENEMANAGER.currentScene.camera.inView(new Vector2()).toString()
+  // );
   // CAMERA.forceCenterCam(Me.body.coordinates)
 }
 

@@ -21,7 +21,8 @@ export enum Flags {
     ANY = -1,
     GROUND = 0,
     CHARACTER = 1,
-    SCRIPT = 2
+    DEATH = 2,
+    FINISH = 3
 }
 
 export class Hitbox { x1!: number; y1!: number; x2!: number; y2!: number; }
@@ -181,7 +182,7 @@ export class Ctx {
 
     scale(k: number): void {
         this.scaleK = k;
-        
+
         // this.resize(this.width, this.height);
     }
 
@@ -205,7 +206,7 @@ export class Ctx {
 
     fillRect(x: number, y: number, w: number, h: number, color: i32): void {
         // x = (i32)(x); y = (i32)(y); w = (i32)(w); h = (i32)(h)
-        x = (i32)(x*this.scaleK); y = (i32)(y*this.scaleK); w = (i32)(w*this.scaleK); h = (i32)(h*this.scaleK)
+        x = (i32)(x * this.scaleK); y = (i32)(y * this.scaleK); w = (i32)(w * this.scaleK); h = (i32)(h * this.scaleK)
         for (let i = x; i < x + w; i++) {
             for (let j = y; j < y + h; j++) {
                 // this.setPixel(i, j, color);
@@ -215,7 +216,7 @@ export class Ctx {
     }
     drawRect(x: number, y: number, w: number, h: number, color: i32): void {
         // x = (i32)(x); y = (i32)(y); w = (i32)(w); h = (i32)(h)
-        x = (i32)(x*this.scaleK); y = (i32)(y*this.scaleK); w = (i32)(w*this.scaleK); h = (i32)(h*this.scaleK)
+        x = (i32)(x * this.scaleK); y = (i32)(y * this.scaleK); w = (i32)(w * this.scaleK); h = (i32)(h * this.scaleK)
         for (let i = x; i < x + w; i++) {
             this.setiPixel(i, y, color);
             this.setiPixel(i, y + h - 1, color);
@@ -226,7 +227,7 @@ export class Ctx {
         }
     }
     clear(): void {
-        this.fillRect(0, 0, this.width/this.scaleK, this.height/this.scaleK, this.background)
+        this.fillRect(0, 0, this.width / this.scaleK, this.height / this.scaleK, this.background)
         // for (let i = 0; i < this.buffer.length; i += 4) {
         //     this.buffer[i] = 0;
         //     this.buffer[i + 1] = 0;
@@ -387,6 +388,13 @@ export class Body {
         this.flags.push(flag);
     }
 
+    addFlags(flags: Flags[]): void {
+        for (let i = 0; i < flags.length; i++) {
+            if (this.flags.includes(flags[i])) return;
+            this.flags.push(flags[i]);
+        }
+    }
+
     hasFlag(flag: Flags): bool {
         if (flag == Flags.ANY) return true;
         return this.flags.includes(flag);
@@ -473,6 +481,16 @@ export class Body {
             }
         }
     }
+
+    // inScreen(): bool{
+    //     let scaleK = this.manager.scene.ctxScale
+    //     let cam = this.manager.scene.camera
+    //     let s = new Vector2(cam.canvas.width, cam.canvas.height) 
+    //     s.multiplyS(scaleK)
+    //     let h = this.hitbox()
+    //     return !(
+    //     // TODO chek if obj in screen to render
+    // }
 
     render(offset: Vector2): void {
         if (!this.toRender) {
@@ -575,6 +593,13 @@ export class Entity {
         this.flags.push(flag);
     }
 
+    addFlags(flags: Flags[]): void {
+        for (let i = 0; i < flags.length; i++) {
+            if (this.flags.includes(flags[i])) return;
+            this.flags.push(flags[i]);
+        }
+    }
+
     hasFlag(flag: Flags): bool {
         if (flag == Flags.ANY) return true;
         return this.flags.includes(flag);
@@ -621,7 +646,7 @@ export class Camera extends Entity {
     }
 
     centerCam(target: Vector2): void {
-        let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5/CTX.scaleK)
+        let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5 / CTX.scaleK)
         let dif = target.CaddV(this.body.center().CmultiplyS(-1))
         dif.addV(center);
         dif.multiplyS(0.2);
@@ -632,9 +657,16 @@ export class Camera extends Entity {
     }
 
     forceCenterCam(target: Vector2): void {
-        let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5/CTX.scaleK)
+        let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5 / CTX.scaleK)
         this.body.coordinates.set(target.CaddV(center));
     }
+
+    // inView(p: Vector2): bool {
+    //     // TODO finish the func to che if point in view
+    //     // new Hitbox{
+    //     //     x1
+    //     // }
+    // }
 
     // render(): void {
 
@@ -769,12 +801,12 @@ export class Scene {
         return new Body(this.bodyManager, width, height);
     }
 
-    newObs(x: number, y: number, width: number, height: number): Body {
+    newObs(x: number, y: number, width: number, height: number, flags: Flags[] = [Flags.GROUND]): Body {
         let obj = this.newBody(width, height);
         obj.coordinates.x = x; obj.coordinates.y = y;
         obj.staticObj = true;
         obj.friction.set(new Vector2(0.9, 0.88));
-        obj.addFlag(Flags.GROUND);
+        obj.addFlags(flags);
         return obj;
     }
 

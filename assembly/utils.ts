@@ -12,25 +12,32 @@ export class Properties {
     canWallJump: boolean = false;
     dashSpeed: number = 10;
     maxSpeed: number = 10;
-} 
+}
 
 
-class Player extends E.Entity {
+export class Player extends E.Entity {
     properties: Properties = new Properties();
+    mAttackB: E.Body;
     constructor(entityManager: E.EntityManager, bodyManager: E.BodyManager) {
         super(entityManager, bodyManager);
+        this.mAttackB = new E.Body(bodyManager, 0, 0)
+        this.mAttackB.staticObj = true;
+
+        // this.mAttackB
     }
 
     meleeAttack(): void {
-        let attackHitbox: E.Hitbox = this.body.hitbox()
-        if (this.facingRight) {
-            attackHitbox.x1 += this.body.width;
-            attackHitbox.x2 += this.properties.meleeRange
-        }
-        else {
-            attackHitbox.x2 -= this.body.width;
-            attackHitbox.x1 -= this.properties.meleeRange
-        }
         
+        this.mAttackB.width = this.properties.meleeRange
+        this.mAttackB.coordinates.y = this.body.coordinates.y
+        this.mAttackB.height = this.body.height
+        // let attackHitbox: E.Hitbox = this.body.hitbox()
+        if (this.facingRight)
+            this.mAttackB.coordinates.x = this.body.coordinates.x + this.body.width;
+
+        else this.mAttackB.coordinates.x = this.body.coordinates.x - this.mAttackB.width;
+
+        // E.CTX.drawRect(attackHitbox.x1, attackHitbox.y1, this.properties.meleeRange, this.body.height, E.iColor(200, 200, 0))
+
     }
 }

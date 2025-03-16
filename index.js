@@ -34,6 +34,8 @@ let imgData = ctx.createImageData(1*WIDTH, 1*HEIGHT);
 function gameLoop(timestamp) {
     keyInput(Array.from(keysPressed));
     gameTick(1);
+    // console.log(Array.from(keysPressed));
+    
   requestAnimationFrame(gameLoop);
 }
 
@@ -45,7 +47,7 @@ function renderFrame() {
   //   iColorConv();
   imgData.data.set(iColorConv());
   // imgData.data.set(applyChromaticAberration(imgData.data));
-  imgData.data.set(applyNoise(imgData.data));
+  // imgData.data.set(applyNoise(imgData.data));
   // imgData.data.set(applyScanlines(imgData.data, WIDTH, HEIGHT));
   
   ctx.putImageData(imgData, 0, 0)
@@ -110,5 +112,12 @@ document.addEventListener("keydown", (e) => {
 document.addEventListener("keyup", (e) => {
   keysPressed.delete(e.key);
 });
+
+document.addEventListener("wheel", (e)=>{
+  // console.log(e);
+  if (e.deltaY < 0) scaleScreen((++s)/100)
+  else scaleScreen((--s)/100)
+  
+})
 
 scaleScreen(s/100)
