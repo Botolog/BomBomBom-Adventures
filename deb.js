@@ -1,0 +1,951 @@
+System.register("utils", ["Engine"], function (exports_1, context_1) {
+    "use strict";
+    var E, Properties, Player;
+    var __moduleName = context_1 && context_1.id;
+    return {
+        setters: [
+            function (E_1) {
+                E = E_1;
+            }
+        ],
+        execute: function () {
+            Properties = class Properties {
+                hp = 100;
+                speedK = 1;
+                jumpK = 1;
+                meleeDamage = 10;
+                meleeRange = 50;
+                specialDamage = 20;
+                canDoubleJump = false;
+                canWallJump = false;
+                dashSpeed = 10;
+                maxSpeed = 10;
+            };
+            exports_1("Properties", Properties);
+            Player = class Player extends E.Entity {
+                properties = new Properties();
+                mAttackB;
+                constructor(entityManager, bodyManager) {
+                    super(entityManager, bodyManager);
+                    this.mAttackB = new E.Body(bodyManager, 0, 0);
+                    this.mAttackB.staticObj = true;
+                    // this.mAttackB
+                }
+                meleeAttack() {
+                    this.mAttackB.width = this.properties.meleeRange;
+                    this.mAttackB.coordinates.y = this.body.coordinates.y;
+                    this.mAttackB.height = this.body.height;
+                    // let attackHitbox: E.Hitbox = this.body.hitbox()
+                    if (this.facingRight)
+                        this.mAttackB.coordinates.x = this.body.coordinates.x + this.body.width;
+                    else
+                        this.mAttackB.coordinates.x = this.body.coordinates.x - this.mAttackB.width;
+                    // E.CTX.drawRect(attackHitbox.x1, attackHitbox.y1, this.properties.meleeRange, this.body.height, E.iColor(200, 200, 0))
+                }
+            };
+            exports_1("Player", Player);
+        }
+    };
+});
+System.register("index", ["Engine", "utils"], function (exports_2, context_2) {
+    "use strict";
+    var width, height, Engine_js_1, utils_js_1, INTERVAL, DRAW_HITBOXES, CameraPosition, lvl0, GROUND, Me;
+    var __moduleName = context_2 && context_2.id;
+    function keyInput(inputKeys) {
+        if ("k" in inputKeys)
+            moveCam(-15, 0);
+        if (";" in inputKeys)
+            moveCam(15, 0);
+        if ("o" in inputKeys)
+            moveCam(0, 15);
+        if ("l" in inputKeys)
+            moveCam(0, -15);
+        if ("ArrowLeft" in inputKeys)
+            Me.control(-1, 0);
+        if ("ArrowRight" in inputKeys)
+            Me.control(1, 0);
+        if ("ArrowUp" in inputKeys)
+            Me.control(0, 0.02);
+        if ("ArrowDown" in inputKeys)
+            Me.control(0, -0.2);
+        // if ("a" in inputKeys) Me.control(-1, 0);
+        // if ("d" in inputKeys) Me.control(1, 0);
+        // if ("w" in inputKeys) Me.control(0, 0.02);
+        // if ("s" in inputKeys) Me.control(0, -0.2);
+        if (" " in inputKeys)
+            Me.meleeAttack();
+        if ("`" in inputKeys)
+            gameTick();
+        // if (inputKeys.includes("q")) console.log(
+        //   // SCENEMANAGER.currentScene.camera.inView(new Vector2()).toString()
+        // );
+        // CAMERA.forceCenterCam(Me.body.coordinates)
+    }
+    exports_2("keyInput", keyInput);
+    function genFrame() {
+        Engine_js_1.SCENEMANAGER.currentScene.camera.centerCam(Me.body.center());
+        Engine_js_1.SCENEMANAGER.render();
+    }
+    exports_2("genFrame", genFrame);
+    // export function Me.control(x:number, y:number): void{
+    //   // Me.body.coordinates.add(new Vector2(x, y));
+    //   Me.body.velocity.addV(new Vector2(x, y))
+    // }
+    function gameTick(dt = 1) {
+        Engine_js_1.SCENEMANAGER.update(dt);
+    }
+    exports_2("gameTick", gameTick);
+    function scaleScreen(k) {
+        // CTX.scale(k);
+        Engine_js_1.SCENEMANAGER.scaleCtx(k);
+        Engine_js_1.SCENEMANAGER.currentScene.camera.forceCenterCam(Me.body.center());
+    }
+    exports_2("scaleScreen", scaleScreen);
+    function getCtx() {
+        return Engine_js_1.SCENEMANAGER.currentScene.camera.canvas.ctx.frame();
+    }
+    exports_2("getCtx", getCtx);
+    function moveCam(x, y) {
+        Engine_js_1.SCENEMANAGER.currentScene.camera.move(new Engine_js_1.Vector2(x, y));
+    }
+    exports_2("moveCam", moveCam);
+    return {
+        setters: [
+            function (Engine_js_1_1) {
+                Engine_js_1 = Engine_js_1_1;
+            },
+            function (utils_js_1_1) {
+                utils_js_1 = utils_js_1_1;
+            }
+        ],
+        execute: function () {
+            exports_2("width", width = 500);
+            exports_2("height", height = 250);
+            exports_2("iColorConv", Engine_js_1.iColorConv);
+            // export let width: number = 1000;
+            // export let height: number = 450;
+            exports_2("INTERVAL", INTERVAL = 20);
+            exports_2("DRAW_HITBOXES", DRAW_HITBOXES = true);
+            exports_2("CameraPosition", CameraPosition = new Engine_js_1.Vector2(0, 0));
+            lvl0 = new Engine_js_1.Scene(0);
+            // lvl0.newEntity();
+            Engine_js_1.SCENEMANAGER.addScene(lvl0);
+            Engine_js_1.SCENEMANAGER.selectScene(0);
+            // export let ENTITY_MANAGER: EntityManager = new EntityManager();
+            // export let CAMERA: Camera = new Camera();
+            // CAMERA.body.coordinates.set(CameraPosition);
+            // export let GROUND: Entity = new Entity();
+            GROUND = lvl0.newBody();
+            GROUND.width = width * 10;
+            GROUND.height = 100;
+            GROUND.coordinates.set(new Engine_js_1.Vector2(5, -93));
+            GROUND.staticObj = true;
+            GROUND.friction = new Engine_js_1.Vector2(0.9, 0.88);
+            GROUND.addFlag(Engine_js_1.Flags.GROUND);
+            // let obs: Entity = new Entity();
+            // obs.body.width = 100;
+            // obs.body.height = 100;
+            // obs.body.gravity.set(new Vector2(0, -0.2));
+            // obs.body.coordinates.set(new Vector2(50, 30));
+            // obs.body.friction = new Vector2(0.9, 0.88)
+            // obs.staticObj = true;
+            // obs.addFlag(Flags.GROUND);
+            // let obs1: Entity = new Entity();
+            // obs1.body.width = 100;
+            // obs1.body.height = 100;
+            // obs1.body.gravity.set(new Vector2(0, -0.2));
+            // obs1.body.coordinates.set(new Vector2(150+180, 30));
+            // obs1.body.friction = new Vector2(0.9, 0.8)
+            // obs1.staticObj = true;
+            // obs1.addFlag(Flags.GROUND);
+            // let obs2: Entity = new Entity();
+            // obs2.body.width = 100;
+            // obs2.body.height = 100;
+            // obs2.body.gravity.set(new Vector2(0, -0.2));
+            // obs2.body.coordinates.set(new Vector2(150+180+100+180, 0));
+            // obs2.body.friction = new Vector2(0.9, 0.8)
+            // obs2.staticObj = true;
+            // obs2.addFlag(Flags.GROUND);
+            // export let Me: Entity = new Entity();
+            // let Me: Entity = SCENEMANAGER.noScene.newEntity();
+            Me = new utils_js_1.Player(Engine_js_1.SCENEMANAGER.noScene.entityManager, Engine_js_1.SCENEMANAGER.noScene.bodyManager);
+            Me.body.width = 20;
+            Me.body.height = 20;
+            Me.body.gravity.set(new Engine_js_1.Vector2(0, -0.25));
+            // Me.body.velocity.y = -10;
+            Me.body.drag = new Engine_js_1.Vector2(0.9, 0.99);
+            Me.body.coordinates.y = 50;
+            Me.body.speedLim = 10;
+            lvl0.addEntity(Me);
+            // Me.body.scripts.push(((T)=>{T.addFlag(Flags.SCRIPT)}))
+            // export { Vector2.multiply, Flags };
+            // export let temp:void = Vector2.
+            lvl0.newObs(100, 100, 100, 100);
+            lvl0.newObs(300, 100, 100, 100);
+            lvl0.newObs(500, 100, 100, 100, [Engine_js_1.Flags.DEATH]).hasHitbox = false;
+            // export function sc(): void{
+            //   console.log(Me.body.sideCollide(obs.body).toString());
+            // }
+        }
+    };
+});
+System.register("Engine", ["index"], function (exports_3, context_3) {
+    "use strict";
+    var index_js_1, Width, Height, Direction, Flags, Hitbox, Vector2, Ctx, Canvas, CTX, CANVAS, Body, Entity, Camera, BodyManager, EntityManager, Scene, SceneManager, SCENEMANAGER;
+    var __moduleName = context_3 && context_3.id;
+    // export class Properties {
+    //     speed: object = {
+    //         up: 0.25,
+    //         down: 0,
+    //         right: 1,
+    //         left: 1,
+    //     }
+    // }
+    function min4(a, b, c, d) {
+        return Math.min(Math.min(a, b), Math.min(c, d));
+    }
+    function absMin(a, b) {
+        if (a == 0)
+            return 0;
+        let i = a / Math.abs(a);
+        return i * Math.min(Math.abs(a), b);
+    }
+    exports_3("absMin", absMin);
+    function absMax(a, b) {
+        if (a == 0)
+            return b;
+        let i = a / Math.abs(a);
+        return i * Math.max(Math.abs(a), b);
+    }
+    exports_3("absMax", absMax);
+    // export class Color {
+    //     r: u8;
+    //     g: u8;
+    //     b: u8;
+    //     a: u8;
+    //     constructor(r: u8, g: u8, b: u8, a: u8 = 255) {
+    //         this.r = r;
+    //         this.g = g;
+    //         this.b = b;
+    //         this.a = a;
+    //     }
+    // }
+    function iColor(R, G, B, A = 255) {
+        return (R << 24) | (G << 16) | (B << 8) | A;
+    }
+    exports_3("iColor", iColor);
+    function iColorConv() {
+        const iframe = CTX.frame();
+        const frameLength = iframe.length * Uint32Array.BYTES_PER_ELEMENT;
+        const frameBuffer = new ArrayBuffer(frameLength);
+        // const frame: Uint8ClampedArray = Uint8ClampedArray.wrap(frameBuffer);
+        // memory.copy(
+        //     changetype<usize>(frame.buffer),
+        //     changetype<usize>(iframe.buffer),
+        //     frameLength
+        // );
+        // return frame;
+    }
+    exports_3("iColorConv", iColorConv);
+    return {
+        setters: [
+            function (index_js_1_1) {
+                index_js_1 = index_js_1_1;
+            }
+        ],
+        execute: function () {
+            Width = index_js_1.width;
+            Height = index_js_1.height;
+            (function (Direction) {
+                Direction[Direction["NONE"] = -1] = "NONE";
+                Direction[Direction["LEFT"] = 0] = "LEFT";
+                Direction[Direction["RIGHT"] = 1] = "RIGHT";
+                Direction[Direction["UP"] = 2] = "UP";
+                Direction[Direction["DOWN"] = 3] = "DOWN";
+            })(Direction || (exports_3("Direction", Direction = {})));
+            (function (Flags) {
+                Flags[Flags["ANY"] = -1] = "ANY";
+                Flags[Flags["GROUND"] = 0] = "GROUND";
+                Flags[Flags["CHARACTER"] = 1] = "CHARACTER";
+                Flags[Flags["DEATH"] = 2] = "DEATH";
+                Flags[Flags["FINISH"] = 3] = "FINISH";
+            })(Flags || (exports_3("Flags", Flags = {})));
+            Hitbox = class Hitbox {
+                x1;
+                y1;
+                x2;
+                y2;
+            };
+            exports_3("Hitbox", Hitbox);
+            Vector2 = class Vector2 {
+                x;
+                y;
+                constructor(x = 0, y = 0) {
+                    this.x = x;
+                    this.y = y;
+                }
+                addV(vector) {
+                    this.x += vector.x;
+                    this.y += vector.y;
+                    return this;
+                }
+                multiplyV(vector) {
+                    this.x *= vector.x;
+                    this.y *= vector.y;
+                    return this;
+                }
+                addS(scalar) {
+                    this.x += scalar;
+                    this.y += scalar;
+                    return this;
+                }
+                multiplyS(scalar) {
+                    this.x *= scalar;
+                    this.y *= scalar;
+                    return this;
+                }
+                CmultiplyS(scalar) {
+                    return new Vector2(this.x * scalar, this.y * scalar);
+                }
+                CmultiplyV(vector) {
+                    return new Vector2(this.x * vector.x, this.y * vector.y);
+                }
+                CaddV(vector) {
+                    return new Vector2(this.x + vector.x, this.y + vector.y);
+                }
+                abs() {
+                    this.x = Math.abs(this.x);
+                    this.y = Math.abs(this.y);
+                    return this;
+                }
+                absMin(lim) {
+                    return new Vector2(absMin(this.x, lim), absMin(this.y, lim));
+                }
+                set(vector) {
+                    this.x = vector.x;
+                    this.y = vector.y;
+                    return this;
+                }
+                clone() {
+                    return new Vector2(this.x, this.y);
+                }
+                toString() {
+                    return "(" + this.x.toString() + ", " + this.y.toString() + ")";
+                }
+            };
+            exports_3("Vector2", Vector2);
+            // export function iColorConv(): Uint8Array{
+            //     const iframe: Uint32Array = CTX.frame();
+            //     let frame: Uint8Array = new Uint8Array(iframe.length*4);
+            //     let pixel: number;
+            //     for (let i=0; i<iframe.length; i+=4){
+            //         pixel = iframe[i/4];
+            //         frame[i]     = (i8)(pixel >> 24) & 0xff; // the R value
+            //         frame[i + 1] = (i8)(pixel >> 16) & 0xff; // the G value
+            //         frame[i + 2] = (i8)(pixel >> 8) & 0xff; // the B value
+            //         frame[i + 3] = (i8)(pixel & 0xff); // the A value
+            //     }
+            //     return frame;
+            // }
+            // export function iColor2Color(color: number): 
+            Ctx = class Ctx {
+                width;
+                height;
+                scaleK = 1;
+                buffer;
+                background = iColor(50, 50, 100);
+                constructor(width, height) {
+                    this.width = (width);
+                    this.height = (height);
+                    let size = (width * height);
+                    this.buffer = new Uint32Array(size);
+                    // this.clear();
+                }
+                resize(width, height) {
+                    this.width = (width);
+                    this.height = (height);
+                    let size = (width * height);
+                    this.buffer = new Uint32Array(size);
+                    this.clear();
+                }
+                scale(k) {
+                    this.scaleK = k;
+                    // this.resize(this.width, this.height);
+                }
+                // setPixel(x: number, y: number, color: Color): void {
+                // if (x < 0 || y < 0 || x >= this.width || y >= this.height) return; // Bounds check
+                //     let index = ((y * this.width + x)) * 4;
+                //     this.bufferRGB[index] = color.r;
+                //     this.bufferRGB[index + 1] = color.g;
+                //     this.bufferRGB[index + 2] = color.b;
+                //     this.bufferRGB[index + 3] = color.a;
+                // }
+                setiPixel(x, y, icolor) {
+                    // x *= this.scaleK; y *= this.scaleK;
+                    let index = ((y * this.width + x));
+                    if (index >= this.buffer.length)
+                        return;
+                    if (x < 0 || y < 0 || x >= this.width || y >= this.height)
+                        return; // Bounds check
+                    // if (index < 0 || index >= this.buffer.length) return ;
+                    this.buffer[index] = icolor;
+                }
+                fillRect(x, y, w, h, color) {
+                    // x = (x); y = (y); w = (w); h = (h)
+                    x = (x * this.scaleK);
+                    y = (y * this.scaleK);
+                    w = (w * this.scaleK);
+                    h = (h * this.scaleK);
+                    for (let i = x; i < x + w; i++) {
+                        for (let j = y; j < y + h; j++) {
+                            // this.setPixel(i, j, color);
+                            this.setiPixel(i, j, color);
+                        }
+                    }
+                }
+                drawRect(x, y, w, h, color) {
+                    // x = (x); y = (y); w = (w); h = (h)
+                    x = (x * this.scaleK);
+                    y = (y * this.scaleK);
+                    w = (w * this.scaleK);
+                    h = (h * this.scaleK);
+                    for (let i = x; i < x + w; i++) {
+                        this.setiPixel(i, y, color);
+                        this.setiPixel(i, y + h - 1, color);
+                    }
+                    for (let j = y; j < y + h; j++) {
+                        this.setiPixel(x, j, color);
+                        this.setiPixel(x + w - 1, j, color);
+                    }
+                }
+                clear() {
+                    this.fillRect(0, 0, this.width / this.scaleK, this.height / this.scaleK, this.background);
+                    // for (let i = 0; i < this.buffer.length; i += 4) {
+                    //     this.buffer[i] = 0;
+                    //     this.buffer[i + 1] = 0;
+                    //     this.buffer[i + 2] = 0;
+                    //     this.buffer[i + 3] = 255;
+                    // }
+                    // this.buffer.fill(0);
+                }
+                frame() {
+                    return this.buffer;
+                }
+            };
+            exports_3("Ctx", Ctx);
+            Canvas = class Canvas {
+                ctx;
+                width;
+                height;
+                // background: Color = new Color(0, 0, 255);
+                constructor(ctx) {
+                    this.ctx = ctx;
+                    if (this.ctx === null) {
+                        throw new Error("CanvasRenderingContext2D is null");
+                    }
+                    this.width = ctx.width;
+                    this.height = ctx.height;
+                }
+                resize(width, height) {
+                    this.width = width;
+                    this.height = height;
+                    this.ctx.resize(width, height);
+                }
+                render(offset = null) {
+                    // this.ctx.clear();
+                    // if (offset === null) {
+                    //     offset = CAMERA.body.coordinates;
+                    // }
+                    // ENTITY_MANAGER.render(offset);
+                }
+            };
+            exports_3("Canvas", Canvas);
+            exports_3("CTX", CTX = new Ctx(Width, Height));
+            exports_3("CANVAS", CANVAS = new Canvas(CTX));
+            Body = class Body {
+                width;
+                height;
+                coordinates;
+                velocity;
+                gravity;
+                drag;
+                friction = new Vector2(1, 1);
+                staticObj = false;
+                hasHitbox = true;
+                manager;
+                flags = [];
+                toRender = true;
+                speedLim = 20;
+                scripts = [];
+                constructor(manager, width = 0, height = 0) {
+                    this.width = width;
+                    this.height = height;
+                    this.coordinates = new Vector2();
+                    this.velocity = new Vector2();
+                    this.gravity = new Vector2();
+                    this.drag = new Vector2(0.5, 0.9);
+                    this.manager = manager;
+                    this.manager.addBody(this);
+                }
+                hitbox() {
+                    return {
+                        x1: this.coordinates.x,
+                        y1: this.coordinates.y,
+                        x2: this.coordinates.x + this.width,
+                        y2: this.coordinates.y + this.height
+                    };
+                }
+                center() {
+                    let h = this.hitbox();
+                    return new Vector2((h.x1 + h.x2) / 2, (h.y1 + h.y2) / 2);
+                }
+                collide(another) {
+                    if (!this.hasHitbox || !another.hasHitbox)
+                        return false;
+                    const hitbox1 = this.hitbox();
+                    const hitbox2 = another.hitbox();
+                    return (hitbox1.x1 <= hitbox2.x2 &&
+                        hitbox1.x2 >= hitbox2.x1 &&
+                        hitbox1.y1 <= hitbox2.y2 &&
+                        hitbox1.y2 >= hitbox2.y1);
+                }
+                sideCollide(another) {
+                    if (!this.hasHitbox || !another.hasHitbox)
+                        return Direction.NONE;
+                    const a = this.hitbox();
+                    const b = another.hitbox();
+                    // First, check if the hitboxes intersect at all.
+                    if (a.x2 < b.x1 || a.x1 > b.x2 || a.y2 < b.y1 || a.y1 > b.y2) {
+                        return Direction.NONE;
+                    }
+                    // Calculate penetration depths in all directions:
+                    // How far is 'this' penetrating into 'another' from each side?
+                    const penetrationLeft = b.x2 - a.x1; // collision from left
+                    const penetrationRight = a.x2 - b.x1; // collision from right
+                    const penetrationTop = b.y2 - a.y1; // collision from top
+                    const penetrationBottom = a.y2 - b.y1; // collision from bottom
+                    // Determine which penetration is the smallest.
+                    // That will be the primary collision direction.
+                    const minPenetration = min4(penetrationLeft, penetrationRight, penetrationTop, penetrationBottom);
+                    if (minPenetration === penetrationLeft) {
+                        return Direction.LEFT;
+                    }
+                    else if (minPenetration === penetrationRight) {
+                        return Direction.RIGHT;
+                    }
+                    else if (minPenetration === penetrationTop) {
+                        return Direction.DOWN;
+                    }
+                    else {
+                        return Direction.UP;
+                    }
+                }
+                addFlag(flag) {
+                    if (flag in this.flags)
+                        return;
+                    this.flags.push(flag);
+                }
+                addFlags(flags) {
+                    for (let i = 0; i < flags.length; i++) {
+                        if (flags[i] in this.flags)
+                            return;
+                        this.flags.push(flags[i]);
+                    }
+                }
+                hasFlag(flag) {
+                    if (flag == Flags.ANY)
+                        return true;
+                    return flag in this.flags;
+                }
+                calcFriction() {
+                    let colds = this.manager.collidesWithSomething(this);
+                    let mod = new Vector2(1, 1);
+                    for (let i = 0; i < colds.length; i++) {
+                        // console.log(colds[i].body.friction.toString());
+                        mod.multiplyV(colds[i].friction);
+                    }
+                    // console.log(mod.toString());
+                    return mod;
+                }
+                // jump(): void {
+                //     const vj = 3;
+                //     const hj = 13;
+                //     let colds = this.manager.sidesThatCollides(this, Flags.GROUND);
+                //     if (colds.length > 0) {
+                //         if (colds.includes(Direction.UP)) return;
+                //         if (colds.includes(Direction.RIGHT)) {
+                //             this.coordinates.x -= 3;
+                //             this.velocity.y = vj;
+                //             this.velocity.x = -hj;
+                //         }
+                //         if (colds.includes(Direction.LEFT)) {
+                //             this.coordinates.x += 3;
+                //             this.velocity.y = vj;
+                //             this.velocity.x = hj;
+                //         }
+                //         if (colds.includes(Direction.DOWN)) {
+                //             this.coordinates.y += 3;
+                //             this.velocity.y = 7;
+                //         }
+                //         // console.log("jumped");
+                //     }
+                // }
+                exeScripts() {
+                    for (let i = 0; i < this.scripts.length; i++) {
+                        this.scripts[i](this);
+                    }
+                }
+                update(dt) {
+                    if (this.staticObj)
+                        return;
+                    this.velocity.addV(this.gravity.CmultiplyS(dt));
+                    this.velocity.multiplyV(this.drag.CmultiplyV(this.calcFriction()));
+                    // this.velocity.x = absMin(this.velocity.x, this.speedLim)
+                    // console.log(this.velocity.toString());
+                    this.coordinates.addV(this.velocity.CmultiplyS(dt).absMin(this.speedLim));
+                    let colds = this.manager.collidesWithSomething(this, Flags.GROUND);
+                    for (let i = 0; i < colds.length; i++) {
+                        const col = colds[i];
+                        const side = this.sideCollide(col);
+                        if (side == Direction.DOWN || side == Direction.UP)
+                            this.velocity.y *= 0.01;
+                        if (side == Direction.LEFT || side == Direction.RIGHT)
+                            this.velocity.x *= 0.01;
+                        switch (side) {
+                            case Direction.UP:
+                                this.coordinates.y = col.coordinates.y - this.height;
+                                break;
+                            case Direction.DOWN:
+                                this.coordinates.y = col.coordinates.y + col.height;
+                                break;
+                            case Direction.LEFT:
+                                this.coordinates.x = col.coordinates.x + col.width;
+                                break;
+                            case Direction.RIGHT:
+                                this.coordinates.x = col.coordinates.x - this.width;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+                // inScreen(): boolean{
+                //     let scaleK = this.manager.scene.ctxScale
+                //     let cam = this.manager.scene.camera
+                //     let s = new Vector2(cam.canvas.width, cam.canvas.height) 
+                //     s.multiplyS(scaleK)
+                //     let h = this.hitbox()
+                //     return !(
+                //     // TODO chek if obj in screen to render
+                // }
+                render(offset) {
+                    if (!this.toRender) {
+                        return;
+                    }
+                    // this.canvas.ctx.fillRect(
+                    //     this.body.coordinates.x - offset.x,
+                    //     this.body.coordinates.y - offset.y,
+                    //     1,
+                    //     1,
+                    //     red
+                    // );
+                    if (index_js_1.DRAW_HITBOXES) {
+                        this.manager.scene.camera.canvas.ctx.drawRect(this.coordinates.x - offset.x, this.coordinates.y - offset.y, this.width, this.height, iColor(255, 0, 0));
+                    }
+                }
+                move(vector) {
+                    this.coordinates.addV(vector);
+                }
+            };
+            exports_3("Body", Body);
+            Entity = class Entity {
+                // canvas: Canvas;
+                body;
+                manager;
+                // properties: Properties = new Properties();
+                flags;
+                toRender = true;
+                staticObj = false;
+                scripts = [];
+                facingRight;
+                constructor(Emanager, Bmanager) {
+                    // this.canvas = CANVAS;
+                    this.body = new Body(Bmanager, 0, 0);
+                    this.manager = Emanager;
+                    this.flags = [];
+                    this.manager.addEntity(this);
+                    this.facingRight = true;
+                }
+                jump() {
+                    const vj = 3;
+                    const hj = 13;
+                    let colds = this.body.manager.sidesThatCollides(this.body, Flags.GROUND);
+                    if (colds.length > 0) {
+                        if (Direction.UP in colds)
+                            return;
+                        if (Direction.RIGHT in colds) {
+                            this.body.coordinates.x -= 3;
+                            this.body.velocity.y = vj;
+                            this.body.velocity.x = -hj;
+                            this.facingRight = false;
+                        }
+                        if (Direction.LEFT in colds) {
+                            this.body.coordinates.x += 3;
+                            this.body.velocity.y = vj;
+                            this.body.velocity.x = hj;
+                            this.facingRight = true;
+                        }
+                        if (Direction.DOWN in colds) {
+                            this.body.coordinates.y += 3;
+                            this.body.velocity.y = 7;
+                        }
+                        // console.log("jumped");
+                    }
+                }
+                exeScripts() {
+                    for (let i = 0; i < this.scripts.length; i++) {
+                        this.scripts[i](this);
+                    }
+                }
+                update(dt) {
+                    if (this.staticObj)
+                        return;
+                    this.exeScripts();
+                    // this.body.update(dt);
+                }
+                control(x, y) {
+                    if (Math.abs(x) > 0.1)
+                        this.facingRight = x > 0;
+                    console.log(this.facingRight.toString());
+                    if (this.manager.collidesWithSomething(this).length == 0)
+                        x *= 0.7;
+                    this.body.velocity.addV(new Vector2(x, y));
+                    if (y > 0)
+                        this.jump();
+                }
+                addFlag(flag) {
+                    if (flag in this.flags)
+                        return;
+                    this.flags.push(flag);
+                }
+                addFlags(flags) {
+                    for (let i = 0; i < flags.length; i++) {
+                        if (flags[i] in this.flags)
+                            return;
+                        this.flags.push(flags[i]);
+                    }
+                }
+                hasFlag(flag) {
+                    if (flag == Flags.ANY)
+                        return true;
+                    return flag in this.flags;
+                }
+                render(offset) {
+                    if (!this.toRender) {
+                        return;
+                    }
+                    // this.canvas.ctx.fillRect(
+                    //     this.body.coordinates.x - offset.x,
+                    //     this.body.coordinates.y - offset.y,
+                    //     1,
+                    //     1,
+                    //     red
+                    // );
+                    if (index_js_1.DRAW_HITBOXES) {
+                        this.manager.scene.camera.canvas.ctx.drawRect(this.body.coordinates.x - offset.x, this.body.coordinates.y - offset.y, this.body.width, this.body.height, iColor(255, 0, 0));
+                    }
+                }
+            };
+            exports_3("Entity", Entity);
+            Camera = class Camera extends Entity {
+                // coordinates: Vector2;
+                canvas = CANVAS;
+                constructor(Emanager, Bmanager) {
+                    super(Emanager, Bmanager);
+                    this.body.hasHitbox = false;
+                    // this.canvas = new Canvas(new Ctx(width, height));
+                }
+                move(vector) {
+                    this.body.coordinates.addV(vector);
+                }
+                centerCam(target) {
+                    let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5 / CTX.scaleK);
+                    let dif = target.CaddV(this.body.center().CmultiplyS(-1));
+                    dif.addV(center);
+                    dif.multiplyS(0.2);
+                    // this.body.center()
+                    this.body.velocity.set(dif);
+                    // console.log(dif.toString());
+                }
+                forceCenterCam(target) {
+                    let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5 / CTX.scaleK);
+                    this.body.coordinates.set(target.CaddV(center));
+                }
+            };
+            exports_3("Camera", Camera);
+            BodyManager = class BodyManager {
+                bodies;
+                scene;
+                constructor(scene) {
+                    this.scene = scene;
+                    this.bodies = [];
+                }
+                addBody(body) {
+                    this.bodies.push(body);
+                }
+                collidesWithSomething(body, flag = Flags.ANY) {
+                    let collidedBodies = [];
+                    // return this.entities.some(another => entity !== another && entity.body.collide(another.body));
+                    for (let i = 0; i < this.bodies.length; i++) {
+                        if (body !== this.bodies[i] && body.collide(this.bodies[i]) && this.bodies[i].hasFlag(flag)) {
+                            collidedBodies.push(this.bodies[i]);
+                        }
+                    }
+                    return collidedBodies;
+                }
+                sidesThatCollides(body, flag = Flags.ANY) {
+                    let colds = this.collidesWithSomething(body, flag);
+                    let dirs = [];
+                    for (let i = 0; i < colds.length; i++) {
+                        dirs.push(body.sideCollide(colds[i]));
+                    }
+                    return dirs;
+                }
+                update(dt) {
+                    for (let i = 0; i < this.bodies.length; i++) {
+                        this.bodies[i].update(dt);
+                    }
+                }
+                render(offset) {
+                    for (let i = 0; i < this.bodies.length; i++) {
+                        this.bodies[i].render(offset);
+                    }
+                }
+            };
+            exports_3("BodyManager", BodyManager);
+            EntityManager = class EntityManager {
+                entities;
+                scene;
+                constructor(scene) {
+                    this.entities = [];
+                    this.scene = scene;
+                }
+                addEntity(entity) {
+                    this.entities.push(entity);
+                }
+                collidesWithSomething(entity, flag = Flags.ANY) {
+                    let collidedEntities = [];
+                    // return this.entities.some(another => entity !== another && entity.body.collide(another.body));
+                    for (let i = 0; i < this.entities.length; i++) {
+                        if (entity !== this.entities[i] && entity.body.collide(this.entities[i].body) && this.entities[i].hasFlag(flag)) {
+                            collidedEntities.push(this.entities[i]);
+                        }
+                    }
+                    return collidedEntities;
+                }
+                sidesThatCollides(entitiy, flag = Flags.ANY) {
+                    let colds = this.collidesWithSomething(entitiy, flag);
+                    let dirs = [];
+                    for (let i = 0; i < colds.length; i++) {
+                        dirs.push(entitiy.body.sideCollide(colds[i].body));
+                    }
+                    return dirs;
+                }
+                update(dt) {
+                    for (let i = 0; i < this.entities.length; i++) {
+                        this.entities[i].update(dt);
+                    }
+                }
+                render(offset) {
+                    for (let i = 0; i < this.entities.length; i++) {
+                        this.entities[i].render(offset);
+                    }
+                }
+            };
+            exports_3("EntityManager", EntityManager);
+            Scene = class Scene {
+                // manager: SceneManager;
+                entityManager = new EntityManager(this);
+                bodyManager = new BodyManager(this);
+                camera = new Camera(this.entityManager, this.bodyManager);
+                ctxScale = 1;
+                ID;
+                constructor(ID) {
+                    this.ID = ID;
+                    // this.manager = SCENEMANAGER;
+                    // this.entityManager = new EntityManager(this);
+                    // this.bodyManager = new BodyManager(this);
+                    // let cam = new Camera(this.entityManager, this.bodyManager);
+                    // this.camera = new Camera(this.entityManager, this.bodyManager)
+                }
+                addEntity(entity) {
+                    entity.manager = this.entityManager;
+                    this.entityManager.addEntity(entity);
+                    entity.body.manager = this.bodyManager;
+                    this.bodyManager.addBody(entity.body);
+                }
+                newEntity() {
+                    return new Entity(this.entityManager, this.bodyManager);
+                    // this.entityManager.addEntity()
+                }
+                newBody(width = 0, height = 0) {
+                    return new Body(this.bodyManager, width, height);
+                }
+                newObs(x, y, width, height, flags = [Flags.GROUND]) {
+                    let obj = this.newBody(width, height);
+                    obj.coordinates.x = x;
+                    obj.coordinates.y = y;
+                    obj.staticObj = true;
+                    obj.friction.set(new Vector2(0.9, 0.88));
+                    obj.addFlags(flags);
+                    return obj;
+                }
+                update(dt = 0) {
+                    this.entityManager.update(dt);
+                    this.bodyManager.update(dt);
+                }
+                render() {
+                    this.camera.canvas.ctx.clear();
+                    this.entityManager.render(this.camera.body.coordinates);
+                    this.bodyManager.render(this.camera.body.coordinates);
+                }
+            };
+            exports_3("Scene", Scene);
+            SceneManager = class SceneManager {
+                scenes = [];
+                noScene = new Scene(-1);
+                currentScene = this.noScene;
+                constructor() {
+                    // this.currentScene = this.noScene;
+                }
+                findScene(ID) {
+                    for (let i = 0; i < this.scenes.length; i++) {
+                        if (this.scenes[i].ID == ID)
+                            return this.scenes[i];
+                    }
+                    return this.currentScene;
+                }
+                addScene(scene) {
+                    this.scenes.push(scene);
+                }
+                selectScene(ID) {
+                    this.currentScene = this.findScene(ID);
+                    CTX.scale(this.currentScene.ctxScale);
+                    return this.currentScene;
+                }
+                scaleCtx(k) {
+                    this.currentScene.ctxScale = k;
+                    CTX.scale(k);
+                }
+                update(dt) {
+                    this.currentScene.update(dt);
+                }
+                render() {
+                    this.currentScene.render();
+                }
+            };
+            exports_3("SceneManager", SceneManager);
+            exports_3("SCENEMANAGER", SCENEMANAGER = new SceneManager());
+        }
+    };
+});

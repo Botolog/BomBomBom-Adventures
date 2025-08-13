@@ -12,12 +12,22 @@
     "asbuild": "npm run asbuild:debug && npm run asbuild:release",
     "test": "node tests",
     "start": "npx serve .",
-    "make": "npm run asbuild && npm start"
+    "make": "npm run asbuild && npm start",
+
+    "asbuildS:debug": "asc index.ts --target debug --baseDir ./server",
+    "asbuildS:release": "asc index.ts -O3 --target release --baseDir ./server",
+    "asbuildS": "npm run asbuildS:debug && npm run asbuildS:release",
+    "testS": "/node tests",
+    "compS": "npx tsc -p server/tsconfig.json",
+    "startS": "node server/run.js",
+    "makeS": "npm run compS && npm run startS"
   },
   "devDependencies": {
-    "assemblyscript": "^0.27.37"
+    "assemblyscript": "^0.27.37",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@assemblyscript/loader": "^0.28.4",
     "as-sleep": "^0.0.2",
     "as2d": "^0.1.0"
   }

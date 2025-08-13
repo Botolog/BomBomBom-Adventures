@@ -1,4 +1,4 @@
-import * as E from "./Engine";
+import * as E from "./Engine.js";
 
 
 export class Properties {

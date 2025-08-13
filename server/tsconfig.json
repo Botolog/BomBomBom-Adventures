@@ -1,0 +1,13 @@
+{
+  "include": [
+    "./**/*.ts"
+  ],
+  
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "es2020",
+
+    "importHelpers": true,
+    "outDir": "./build",
+  }
+}

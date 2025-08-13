@@ -1,0 +1,16 @@
+{
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./build/index.js"
+    }
+  },
+  "devDependencies": {
+    "assemblyscript": "^0.27.37"
+  },
+  "dependencies": {
+    "@assemblyscript/loader": "^0.28.4",
+    "as-sleep": "^0.0.2",
+    "as2d": "^0.1.0"
+  }
+}
