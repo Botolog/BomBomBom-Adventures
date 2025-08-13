@@ -15,7 +15,7 @@
     "make": "npm run asbuild && npm start"
   },
   "devDependencies": {
-    "assemblyscript": "^0.27.34"
+    "assemblyscript": "^0.27.37"
   },
   "dependencies": {
     "as-sleep": "^0.0.2",
