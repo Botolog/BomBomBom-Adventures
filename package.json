@@ -13,7 +13,6 @@
     "test": "node tests",
     "start": "npx serve .",
     "make": "npm run asbuild && npm start",
-
     "asbuildS:debug": "asc index.ts --target debug --baseDir ./server",
     "asbuildS:release": "asc index.ts -O3 --target release --baseDir ./server",
     "asbuildS": "npm run asbuildS:debug && npm run asbuildS:release",
@@ -29,6 +28,7 @@
   "dependencies": {
     "@assemblyscript/loader": "^0.28.4",
     "as-sleep": "^0.0.2",
-    "as2d": "^0.1.0"
+    "as2d": "^0.1.0",
+    "ws": "^8.18.3"
   }
 }

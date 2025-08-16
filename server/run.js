@@ -1,5 +1,5 @@
-import {
-    width, keyInput
-} from "./build/index.js"
+// import {
+    
+// } from "./build/index.js"
 
-console.log(width)
+import { sendData } from "./conn.js"

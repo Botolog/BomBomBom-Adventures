@@ -6,6 +6,7 @@ import {
     height,
 } from "./index.js";
 
+import { Conn, Properties, RC } from "./utils.js";
 
 
 const Width: number = width;
@@ -125,172 +126,6 @@ export class Vector2 {
     }
 }
 
-// export class Color {
-//     r: u8;
-//     g: u8;
-//     b: u8;
-//     a: u8;
-//     constructor(r: u8, g: u8, b: u8, a: u8 = 255) {
-//         this.r = r;
-//         this.g = g;
-//         this.b = b;
-//         this.a = a;
-//     }
-// }
-
-export function iColor(R: number, G: number, B: number, A: number = 255): number {
-    return (R << 24) | (G << 16) | (B << 8) | A;
-}
-
-// export function iColorConv(): Uint8Array{
-//     const iframe: Uint32Array = CTX.frame();
-//     let frame: Uint8Array = new Uint8Array(iframe.length*4);
-//     let pixel: number;
-//     for (let i=0; i<iframe.length; i+=4){
-//         pixel = iframe[i/4];
-//         frame[i]     = (i8)(pixel >> 24) & 0xff; // the R value
-//         frame[i + 1] = (i8)(pixel >> 16) & 0xff; // the G value
-//         frame[i + 2] = (i8)(pixel >> 8) & 0xff; // the B value
-//         frame[i + 3] = (i8)(pixel & 0xff); // the A value
-//     }
-//     return frame;
-// }
-
-
-// export function iColor2Color(color: number): 
-
-export class Ctx {
-    width: number;
-    height: number;
-    scaleK: number = 1;
-    buffer: Uint32Array;
-    background: number = iColor(50, 50, 100);
-
-
-    constructor(width: number, height: number) {
-        this.width = (width);
-        this.height = (height);
-        let size: number = (width * height);
-        this.buffer = new Uint32Array(size);
-        // this.clear();
-    }
-    resize(width: number, height: number): void {
-        this.width = (width);
-        this.height = (height);
-        let size: number = (width * height);
-        this.buffer = new Uint32Array(size);
-        this.clear();
-    }
-
-    scale(k: number): void {
-        this.scaleK = k;
-
-        // this.resize(this.width, this.height);
-    }
-
-    // setPixel(x: number, y: number, color: Color): void {
-    // if (x < 0 || y < 0 || x >= this.width || y >= this.height) return; // Bounds check
-    //     let index = ((y * this.width + x)) * 4;
-    //     this.bufferRGB[index] = color.r;
-    //     this.bufferRGB[index + 1] = color.g;
-    //     this.bufferRGB[index + 2] = color.b;
-    //     this.bufferRGB[index + 3] = color.a;
-    // }
-
-    setiPixel(x: number, y: number, icolor: number): void {
-        // x *= this.scaleK; y *= this.scaleK;
-        let index = ((y * this.width + x));
-        if (index >= this.buffer.length) return;
-        if (x < 0 || y < 0 || x >= this.width || y >= this.height) return; // Bounds check
-        // if (index < 0 || index >= this.buffer.length) return ;
-        this.buffer[index] = icolor;
-    }
-
-    fillRect(x: number, y: number, w: number, h: number, color: number): void {
-        // x = (x); y = (y); w = (w); h = (h)
-        x = (x * this.scaleK); y = (y * this.scaleK); w = (w * this.scaleK); h = (h * this.scaleK)
-        for (let i = x; i < x + w; i++) {
-            for (let j = y; j < y + h; j++) {
-                // this.setPixel(i, j, color);
-                this.setiPixel(i, j, color)
-            }
-        }
-    }
-    drawRect(x: number, y: number, w: number, h: number, color: number): void {
-        // x = (x); y = (y); w = (w); h = (h)
-        x = (x * this.scaleK); y = (y * this.scaleK); w = (w * this.scaleK); h = (h * this.scaleK)
-        for (let i = x; i < x + w; i++) {
-            this.setiPixel(i, y, color);
-            this.setiPixel(i, y + h - 1, color);
-        }
-        for (let j = y; j < y + h; j++) {
-            this.setiPixel(x, j, color);
-            this.setiPixel(x + w - 1, j, color);
-        }
-    }
-    clear(): void {
-        this.fillRect(0, 0, this.width / this.scaleK, this.height / this.scaleK, this.background)
-        // for (let i = 0; i < this.buffer.length; i += 4) {
-        //     this.buffer[i] = 0;
-        //     this.buffer[i + 1] = 0;
-        //     this.buffer[i + 2] = 0;
-        //     this.buffer[i + 3] = 255;
-        // }
-        // this.buffer.fill(0);
-    }
-    frame(): Uint32Array {
-        return this.buffer;
-    }
-}
-
-export class Canvas {
-    ctx: Ctx;
-    width: number;
-    height: number;
-    // background: Color = new Color(0, 0, 255);
-
-    constructor(ctx: Ctx) {
-        this.ctx = ctx;
-        if (this.ctx === null) { throw new Error("CanvasRenderingContext2D is null"); }
-
-        this.width = ctx.width;
-        this.height = ctx.height;
-    }
-
-    resize(width: number, height: number): void {
-        this.width = width;
-        this.height = height;
-        this.ctx.resize(width, height);
-    }
-
-
-    render(offset: Vector2 | null = null): void {
-        // this.ctx.clear();
-
-        // if (offset === null) {
-        //     offset = CAMERA.body.coordinates;
-        // }
-        // ENTITY_MANAGER.render(offset);
-    }
-}
-
-
-export var CTX: Ctx = new Ctx(Width, Height);
-export var CANVAS: Canvas = new Canvas(CTX);
-
-
-export function iColorConv(): void {
-    const iframe: Uint32Array = CTX.frame();
-    const frameLength: number = iframe.length * Uint32Array.BYTES_PER_ELEMENT;
-    const frameBuffer: ArrayBuffer = new ArrayBuffer(frameLength);
-    // const frame: Uint8ClampedArray = Uint8ClampedArray.wrap(frameBuffer);
-    // memory.copy(
-    //     changetype<usize>(frame.buffer),
-    //     changetype<usize>(iframe.buffer),
-    //     frameLength
-    // );
-    // return frame;
-}
 
 export class Body {
     width: number;
@@ -494,31 +329,36 @@ export class Body {
     //     // TODO chek if obj in screen to render
     // }
 
-    render(offset: Vector2): void {
-        if (!this.toRender) {
-            return;
-        }
-        // this.canvas.ctx.fillRect(
-        //     this.body.coordinates.x - offset.x,
-        //     this.body.coordinates.y - offset.y,
-        //     1,
-        //     1,
-        //     red
-        // );
+    // render(offset: Vector2): void {
+    //     if (!this.toRender) {
+    //         return;
+    //     }
+    //     // this.canvas.ctx.fillRect(
+    //     //     this.body.coordinates.x - offset.x,
+    //     //     this.body.coordinates.y - offset.y,
+    //     //     1,
+    //     //     1,
+    //     //     red
+    //     // );
 
-        if (DRAW_HITBOXES) {
-            this.manager.scene.camera.canvas.ctx.drawRect(
-                this.coordinates.x - offset.x,
-                this.coordinates.y - offset.y,
-                this.width,
-                this.height,
-                iColor(255, 0, 0)
-            );
-        }
-    }
+    //     if (DRAW_HITBOXES) {
+    //         this.manager.scene.camera.canvas.ctx.drawRect(
+    //             this.coordinates.x - offset.x,
+    //             this.coordinates.y - offset.y,
+    //             this.width,
+    //             this.height,
+    //             iColor(255, 0, 0)
+    //         );
+    //     }
+    // }
 
     move(vector: Vector2): void {
         this.coordinates.addV(vector);
+    }
+
+    destroy(): void {
+        let index = this.manager.bodies.indexOf(this)
+        this.manager.bodies.splice(index, 1)
     }
 }
 
@@ -540,6 +380,95 @@ export class Entity {
         this.flags = [];
         this.manager.addEntity(this);
         this.facingRight = true;
+    }
+
+    exeScripts(): void {
+        for (let i = 0; i < this.scripts.length; i++) {
+            this.scripts[i](this);
+        }
+
+
+    }
+
+    update(dt: number): void {
+        if (this.staticObj) return;
+        this.exeScripts()
+        // this.body.update(dt);
+    }
+
+    addFlag(flag: Flags): void {
+        if (flag in this.flags) return;
+        this.flags.push(flag);
+    }
+
+    addFlags(flags: Flags[]): void {
+        for (let i = 0; i < flags.length; i++) {
+            if (flags[i] in this.flags) return;
+            this.flags.push(flags[i]);
+        }
+    }
+
+    hasFlag(flag: Flags): boolean {
+        if (flag == Flags.ANY) return true;
+        return flag in this.flags;
+    }
+
+    destroy(): void {
+        this.body.destroy()
+        let index = this.manager.entities.indexOf(this)
+        this.manager.entities.splice(index, 1)
+    }
+
+    // render(offset: Vector2): void {
+    //     if (!this.toRender) {
+    //         return;
+    //     }
+    //     // this.canvas.ctx.fillRect(
+    //     //     this.body.coordinates.x - offset.x,
+    //     //     this.body.coordinates.y - offset.y,
+    //     //     1,
+    //     //     1,
+    //     //     red
+    //     // );
+
+    //     if (DRAW_HITBOXES) {
+    //         this.manager.scene.camera.canvas.ctx.drawRect(
+    //             this.body.coordinates.x - offset.x,
+    //             this.body.coordinates.y - offset.y,
+    //             this.body.width,
+    //             this.body.height,
+    //             iColor(255, 0, 0)
+    //         );
+    //     }
+    // }
+}
+
+export class Player extends Entity {
+    properties: Properties = new Properties();
+    mAttackB: Body;
+    conn: Conn;
+    constructor(conn: Conn, entityManager: EntityManager, bodyManager: BodyManager) {
+        super(entityManager, bodyManager);
+        this.mAttackB = new Body(bodyManager, 0, 0);
+        this.mAttackB.staticObj = true;
+
+        this.body.width = 20;
+        this.body.height = 20;
+        this.body.gravity.set(new Vector2(0, -0.25));
+        // this.body.velocity.y = -10;
+        this.body.drag = new Vector2(0.9, 0.99);
+        this.body.coordinates.y = 50;
+        this.body.speedLim = 10;
+
+        this.conn = conn;
+
+        conn.ws.once("close", e => {
+            this.destroy()
+        })
+
+        conn.initCommand(RC.SET_POS, (c) => {
+            this.body.coordinates.x = c[0]; this.body.coordinates.y = c[1];
+        })
     }
 
     jump(): void {
@@ -568,20 +497,6 @@ export class Entity {
         }
     }
 
-    exeScripts(): void {
-        for (let i = 0; i < this.scripts.length; i++) {
-            this.scripts[i](this);
-        }
-
-
-    }
-
-    update(dt: number): void {
-        if (this.staticObj) return;
-        this.exeScripts()
-        // this.body.update(dt);
-    }
-
     control(x: number, y: number): void {
         if (Math.abs(x) > 0.1) this.facingRight = x > 0;
         console.log(this.facingRight.toString())
@@ -590,92 +505,52 @@ export class Entity {
         if (y > 0) this.jump();
     }
 
-    addFlag(flag: Flags): void {
-        if (flag in this.flags) return;
-        this.flags.push(flag);
-    }
-
-    addFlags(flags: Flags[]): void {
-        for (let i = 0; i < flags.length; i++) {
-            if (flags[i] in this.flags) return;
-            this.flags.push(flags[i]);
-        }
-    }
-
-    hasFlag(flag: Flags): boolean {
-        if (flag == Flags.ANY) return true;
-        return flag in this.flags;
-    }
-
-    render(offset: Vector2): void {
-        if (!this.toRender) {
-            return;
-        }
-        // this.canvas.ctx.fillRect(
-        //     this.body.coordinates.x - offset.x,
-        //     this.body.coordinates.y - offset.y,
-        //     1,
-        //     1,
-        //     red
-        // );
-
-        if (DRAW_HITBOXES) {
-            this.manager.scene.camera.canvas.ctx.drawRect(
-                this.body.coordinates.x - offset.x,
-                this.body.coordinates.y - offset.y,
-                this.body.width,
-                this.body.height,
-                iColor(255, 0, 0)
-            );
-        }
-    }
-}
-
-
-
-export class Camera extends Entity {
-    // coordinates: Vector2;
-    canvas: Canvas = CANVAS;
-
-    constructor(Emanager: EntityManager, Bmanager: BodyManager) {
-        super(Emanager, Bmanager);
-        this.body.hasHitbox = false;
-        // this.canvas = new Canvas(new Ctx(width, height));
-    }
-
-    public move(vector: Vector2): void {
-        this.body.coordinates.addV(vector);
-    }
-
-    centerCam(target: Vector2): void {
-        let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5 / CTX.scaleK)
-        let dif = target.CaddV(this.body.center().CmultiplyS(-1))
-        dif.addV(center);
-        dif.multiplyS(0.2);
-        // this.body.center()
-        this.body.velocity.set(dif);
-        // console.log(dif.toString());
-
-    }
-
-    forceCenterCam(target: Vector2): void {
-        let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5 / CTX.scaleK)
-        this.body.coordinates.set(target.CaddV(center));
-    }
-
-    // inView(p: Vector2): boolean {
-    //     // TODO finish the func to che if point in view
-    //     // new Hitbox{
-    //     //     x1
-    //     // }
-    // }
-
-    // render(): void {
-
-    // }
-
 
 }
+
+// export class Camera extends Entity {
+//     // coordinates: Vector2;
+//     canvas: Canvas = CANVAS;
+
+//     constructor(Emanager: EntityManager, Bmanager: BodyManager) {
+//         super(Emanager, Bmanager);
+//         this.body.hasHitbox = false;
+//         // this.canvas = new Canvas(new Ctx(width, height));
+//     }
+
+//     public move(vector: Vector2): void {
+//         this.body.coordinates.addV(vector);
+//     }
+
+//     centerCam(target: Vector2): void {
+//         let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5 / CTX.scaleK)
+//         let dif = target.CaddV(this.body.center().CmultiplyS(-1))
+//         dif.addV(center);
+//         dif.multiplyS(0.2);
+//         // this.body.center()
+//         this.body.velocity.set(dif);
+//         // console.log(dif.toString());
+
+//     }
+
+//     forceCenterCam(target: Vector2): void {
+//         let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5 / CTX.scaleK)
+//         this.body.coordinates.set(target.CaddV(center));
+//     }
+
+//     // inView(p: Vector2): boolean {
+//     //     // TODO finish the func to che if point in view
+//     //     // new Hitbox{
+//     //     //     x1
+//     //     // }
+//     // }
+
+//     // render(): void {
+
+//     // }
+
+
+// }
 
 
 export class BodyManager {
@@ -717,11 +592,11 @@ export class BodyManager {
         }
     }
 
-    render(offset: Vector2): void {
-        for (let i = 0; i < this.bodies.length; i++) {
-            this.bodies[i].render(offset);
-        }
-    }
+    // render(offset: Vector2): void {
+    //     for (let i = 0; i < this.bodies.length; i++) {
+    //         this.bodies[i].render(offset);
+    //     }
+    // }
 }
 
 export class EntityManager {
@@ -763,18 +638,18 @@ export class EntityManager {
         }
     }
 
-    render(offset: Vector2): void {
-        for (let i = 0; i < this.entities.length; i++) {
-            this.entities[i].render(offset);
-        }
-    }
+    // render(offset: Vector2): void {
+    //     for (let i = 0; i < this.entities.length; i++) {
+    //         this.entities[i].render(offset);
+    //     }
+    // }
 }
 
 export class Scene {
     // manager: SceneManager;
     entityManager: EntityManager = new EntityManager(this);
     bodyManager: BodyManager = new BodyManager(this);
-    camera: Camera = new Camera(this.entityManager, this.bodyManager);
+    // camera: Camera = new Camera(this.entityManager, this.bodyManager);
     ctxScale: number = 1;
     ID: number;
     constructor(ID: number) {
@@ -818,11 +693,11 @@ export class Scene {
 
     }
 
-    render(): void {
-        this.camera.canvas.ctx.clear();
-        this.entityManager.render(this.camera.body.coordinates);
-        this.bodyManager.render(this.camera.body.coordinates);
-    }
+    // render(): void {
+    //     this.camera.canvas.ctx.clear();
+    //     this.entityManager.render(this.camera.body.coordinates);
+    //     this.bodyManager.render(this.camera.body.coordinates);
+    // }
 }
 
 export class SceneManager {
@@ -846,24 +721,34 @@ export class SceneManager {
         this.scenes.push(scene);
     }
 
+    newPlayer(conn: Conn): Player {
+        let player = new Player(conn, this.currentScene.entityManager, this.currentScene.bodyManager);
+        // this.addPlayer(player);
+        return player;
+    }
+
+    addPlayer(player): void {
+        this.currentScene.addEntity(player);
+    }
+
     selectScene(ID: number): Scene {
         this.currentScene = this.findScene(ID)!;
-        CTX.scale(this.currentScene.ctxScale)
+        // CTX.scale(this.currentScene.ctxScale)
         return this.currentScene;
     }
 
-    scaleCtx(k: number): void {
-        this.currentScene.ctxScale = k;
-        CTX.scale(k);
-    }
+    // scaleCtx(k: number): void {
+    //     this.currentScene.ctxScale = k;
+    //     CTX.scale(k);
+    // }
 
     update(dt: number): void {
         this.currentScene.update(dt);
     }
 
-    render(): void {
-        this.currentScene.render();
-    }
+    // render(): void {
+    //     this.currentScene.render();
+    // }
 
 }
 
