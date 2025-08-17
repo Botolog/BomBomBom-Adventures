@@ -5,9 +5,10 @@
   
   "compilerOptions": {
     "target": "es2020",
-    "module": "es2020",
+    "module": "nodenext",
 
     "importHelpers": true,
     "outDir": "./build",
+    "moduleResolution": "nodenext"
   }
 }

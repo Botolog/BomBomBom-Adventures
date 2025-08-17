@@ -22,14 +22,6 @@ export var Flags;
 })(Flags || (Flags = {}));
 export class Hitbox {
 }
-// export class Properties {
-//     speed: object = {
-//         up: 0.25,
-//         down: 0,
-//         right: 1,
-//         left: 1,
-//     }
-// }
 function min4(a, b, c, d) {
     return Math.min(Math.min(a, b), Math.min(c, d));
 }
@@ -197,29 +189,6 @@ export class Body {
         // console.log(mod.toString());
         return mod;
     }
-    // jump(): void {
-    //     const vj = 3;
-    //     const hj = 13;
-    //     let colds = this.manager.sidesThatCollides(this, Flags.GROUND);
-    //     if (colds.length > 0) {
-    //         if (colds.includes(Direction.UP)) return;
-    //         if (colds.includes(Direction.RIGHT)) {
-    //             this.coordinates.x -= 3;
-    //             this.velocity.y = vj;
-    //             this.velocity.x = -hj;
-    //         }
-    //         if (colds.includes(Direction.LEFT)) {
-    //             this.coordinates.x += 3;
-    //             this.velocity.y = vj;
-    //             this.velocity.x = hj;
-    //         }
-    //         if (colds.includes(Direction.DOWN)) {
-    //             this.coordinates.y += 3;
-    //             this.velocity.y = 7;
-    //         }
-    //         // console.log("jumped");
-    //     }
-    // }
     exeScripts() {
         for (let i = 0; i < this.scripts.length; i++) {
             this.scripts[i](this);
@@ -361,8 +330,9 @@ export class Player extends Entity {
             this.destroy();
         });
         conn.initCommand(RC.SET_POS, (c) => {
-            this.body.coordinates.x = c[0];
-            this.body.coordinates.y = c[1];
+            // console.log(c)
+            this.body.coordinates.x = c.readFloatLE(0);
+            this.body.coordinates.y = c.readFloatLE(4);
         });
     }
     jump() {
@@ -400,6 +370,11 @@ export class Player extends Entity {
         this.body.velocity.addV(new Vector2(x, y));
         if (y > 0)
             this.jump();
+    }
+    destroy() {
+        super.destroy();
+        let index = SCENEMANAGER.players.indexOf(this);
+        SCENEMANAGER.players.splice(index, 1);
     }
 }
 // export class Camera extends Entity {
@@ -543,6 +518,7 @@ export class Scene {
 export class SceneManager {
     constructor() {
         this.scenes = [];
+        this.players = [];
         this.noScene = new Scene(-1);
         this.currentScene = this.noScene;
         // this.currentScene = this.noScene;
@@ -559,6 +535,7 @@ export class SceneManager {
     }
     newPlayer(conn) {
         let player = new Player(conn, this.currentScene.entityManager, this.currentScene.bodyManager);
+        this.players.push(player);
         // this.addPlayer(player);
         return player;
     }

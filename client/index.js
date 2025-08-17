@@ -7,6 +7,7 @@ let reconnectInterval = 3000; // 3 seconds
 function sendDataToServer(data) {
     if (socket && socket.readyState === 1) { // WebSocket.OPEN = 1
         socket.send(data)
+        // console.log(data)
     } else {
         console.log('Socket not open, message not sent.');
     }
@@ -20,14 +21,18 @@ function str2uint(data) {
   return buff;
 }
 
-function addCode(code, buff){
-  const arrType = buff.constructor;
-  const newBuff = new arrType(buff.length + 1);
-  // const newBuff = new Float32Array(buff.length + 1);
-  newBuff[0] = code; 
-  newBuff.set(buff, 1);
-  return newBuff;
+function addCode(code, data){
+    const buff = data.buffer
+    
+    const newBuff = new ArrayBuffer(buff.byteLength + 1);
+    const newView = new Uint8Array(newBuff);
+    
+    newView[0] = code; // Set the new first byte
+    newView.set(new Uint8Array(buff), 1); // Copy the old data after the first byte
+    return newBuff;
 }
+
+
 
 const pos = new Float32Array(2)
 
@@ -42,6 +47,7 @@ function connectWebSocket() {
         // For Node.js, you would instantiate a new 'WebSocket' object from the 'ws' library.
         // Example for Node.js: const WebSocket = require('ws'); const socket = new WebSocket(wsUrl);
         socket = new WebSocket(wsUrl);
+        // socket.binaryType
 
         // Event listener for a successful connection
         socket.onopen = () => {
@@ -52,10 +58,10 @@ function connectWebSocket() {
             setInterval(() => {
               pos[0]+=1
               sendDataToServer(addCode(1, pos))
-              if (pos[0]%1000==0){
-                console.log(pos)
-              }
-            }, 0);
+            //   if (pos[0]%100==0){
+            //     console.log(pos)
+            //   }
+            }, 100);
         };
 
         // Event listener for incoming messages from the server
@@ -99,17 +105,17 @@ connectWebSocket();
 
 
 
-// import {
+import {
 //   gameTick,
 //   // getCtx,
-//   height,
+  height,
 //   genFrame,
-//   width,
+  width
 //   iColorConv,
 //   keyInput,
 //   scaleScreen,
 //   // sc
-// } from "./build/release.js";
+} from "./build/release.js";
 
 // import { applyNoise, applyChromaticAberration, applyScanlines } from "./effects.js";
 
@@ -117,19 +123,19 @@ connectWebSocket();
 // // i have array of all of the rgba values of the pixels of the image displayed on the canvas
 // // i want to display the frame on the canvas
 
-// const WIDTH = width.value;
-// const HEIGHT = height.value;
+const WIDTH = width.value;
+const HEIGHT = height.value;
 
-// let canvas = document.getElementById("canvas");
-// canvas.width = WIDTH;
-// canvas.height = HEIGHT;
-// const mod = 1.3; 
-// canvas.style.width = mod*WIDTH + "px";
-// canvas.style.height = mod*HEIGHT + "px";
+let canvas = document.getElementById("canvas");
+canvas.width = WIDTH;
+canvas.height = HEIGHT;
+const mod = 1.3; 
+canvas.style.width = mod*WIDTH + "px";
+canvas.style.height = mod*HEIGHT + "px";
 
-// let ctx = canvas.getContext("2d", { willReadFrequently: false });
-// ctx.imageSmoothingEnabled = false;
-// let imgData = ctx.createImageData(1*WIDTH, 1*HEIGHT);
+let ctx = canvas.getContext("2d", { willReadFrequently: false });
+ctx.imageSmoothingEnabled = false;
+let imgData = ctx.createImageData(1*WIDTH, 1*HEIGHT);
 
 
 // function gameLoop(timestamp) {
@@ -144,20 +150,20 @@ connectWebSocket();
 // requestAnimationFrame(gameLoop);
 
 
-// function renderFrame() {
-//   //   iColorConv();
-//   imgData.data.set(iColorConv());
-//   // imgData.data.set(applyChromaticAberration(imgData.data));
-//   // imgData.data.set(applyNoise(imgData.data));
-//   // imgData.data.set(applyScanlines(imgData.data, WIDTH, HEIGHT));
+function renderFrame() {
+  //   iColorConv();
+  imgData.data.set(iColorConv());
+  // imgData.data.set(applyChromaticAberration(imgData.data));
+  // imgData.data.set(applyNoise(imgData.data));
+  // imgData.data.set(applyScanlines(imgData.data, WIDTH, HEIGHT));
   
-//   ctx.putImageData(imgData, 0, 0)
-//   // for (let i = 0; i < imgData.data.length; i++) {
-//   //   imgData.data[i] = 50;
-//   // }
-//   //   imgData.data.set(getCtx());
-//   // ctx.putImageData(imgData, 0, 0, 0, 0, );
-// }
+  ctx.putImageData(imgData, 0, 0)
+  // for (let i = 0; i < imgData.data.length; i++) {
+  //   imgData.data[i] = 50;
+  // }
+  //   imgData.data.set(getCtx());
+  // ctx.putImageData(imgData, 0, 0, 0, 0, );
+}
 
 // function testFPS(timeOfTest, framesToRender=100) {
 //   let start = Date.now();

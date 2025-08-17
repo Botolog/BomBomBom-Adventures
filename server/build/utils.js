@@ -21,6 +21,7 @@ export var RC;
 export class Conn {
     constructor(CM, ws, uid = "=") {
         this.uid = "=";
+        this.commands = Array.from({ length: 50 }, () => () => { });
         this.manager = CM;
         this.ws = ws;
         if (uid !== "=") {
@@ -39,15 +40,18 @@ export class Conn {
         });
         this.manager.addConn(this);
         this.initCommand(RC.SET_UID, (c) => { this.uid = String.fromCharCode(...c); });
-    }
-    initCommand(Rcode, command) {
-        this.ws.on("message", async (msg) => {
+        this.ws.on("message", async (bytes) => {
+            // const msg = bytes.readFloatLE(0)
+            const msg = bytes;
             const code = msg[0];
             const content = msg.slice(1);
-            if (code === Rcode) {
-                command(content);
-            }
+            console.log(msg);
+            this.commands[code](content);
         });
+    }
+    initCommand(Rcode, command) {
+        this.commands[Rcode] = command;
+        console.log(this.commands);
     }
     destroy() {
         let index = this.manager.connections.indexOf(this);

@@ -17,11 +17,22 @@ wss.on('connection', async ws => {
 
     
     let conn = new Conn(CM, ws)
-    SCENEMANAGER.newPlayer(conn)
+    let p = SCENEMANAGER.newPlayer(conn)
+    setTimeout(() => {
+        console.log(p.conn.commands[0])
+        
+    }, 100);
     
     
 });
 
+setInterval(() => {
+    if (CM.connections.length != 0){
+        SCENEMANAGER.update(1);
+        
+        console.log(SCENEMANAGER.players[0].body)
+    }
+}, 1);
 
 
 export function sendData(){}
