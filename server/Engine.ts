@@ -127,11 +127,8 @@ export class Body {
         let colds = this.manager.collidesWithSomething(this);
         let mod = new Vector2(1, 1);
         for (let i = 0; i < colds.length; i++) {
-            // console.log(colds[i].body.friction.toString());
-
             mod.multiplyV(colds[i].friction);
         }
-        // console.log(mod.toString());
 
         return mod;
     }
@@ -151,7 +148,6 @@ export class Body {
 
 
         // this.velocity.x = absMin(this.velocity.x, this.speedLim)
-        // console.log(this.velocity.toString());
 
         this.coordinates.addV(this.velocity.CmultiplyS(dt).absMin(this.speedLim));
 
@@ -369,13 +365,11 @@ export class Player extends Entity {
                 this.body.coordinates.y += 3;
                 this.body.velocity.y = this.properties.jumpK;
             }
-            // console.log("jumped");
         }
     }
 
     control(vec: Vector2): void {
         if (Math.abs(vec.x) > 0.1) this.facingRight = vec.x > 0;
-        // console.log(this.facingRight.toString())
         if (this.manager.collidesWithSomething(this).length == 0) vec.x *= 0.7
         this.body.velocity.addV(vec);
         if (vec.y > 0) this.jump();
@@ -383,7 +377,6 @@ export class Player extends Entity {
 
     update(dt: number): void {
         this.control(this.currentControl.clone());
-        console.log("P updated call", this.currentControl)
         super.update(dt);
         
     }

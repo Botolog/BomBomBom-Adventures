@@ -25,7 +25,6 @@ export class Properties {
 
     getVec(key: KEY): Vector2 {
         let vec = this.vecs.get(key)
-        // console.log(vec, key)
         if (vec) return vec
         return Zvec.clone();
     }
@@ -33,7 +32,6 @@ export class Properties {
     keysToVec(c: Buffer): Vector2 {
         const totalV = Zvec.clone();
         c.forEach(byte=>{
-            console.log()
             totalV.addV(this.getVec(byte))
         })
         return totalV;
@@ -90,14 +88,13 @@ export class Conn {
             const msg = bytes;
             const code = msg[0];
             const content = msg.slice(1);
-            console.log(msg)
+            // console.log(msg)
             this.commands[code](content);
         })
     }
 
     initCommand(Rcode: DC, command: messageFunc): void {
         this.commands[Rcode] = command;
-        // console.log(this.commands)
     }
 
     sendData(code: DC, data: any): void{
