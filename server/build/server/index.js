@@ -64,26 +64,26 @@ export let DRAW_HITBOXES = true;
 // lvl0.newObs(100, 100, 100, 100);
 // lvl0.newObs(300, 100, 100, 100);
 // lvl0.newObs(500, 100, 100, 100, [Flags.DEATH]).hasHitbox = false;
-// // export function keyInput(inputKeys: string[]): void{
-// //   // if ("k" in inputKeys) moveCam(-15, 0);
-// //   // if (";" in inputKeys) moveCam(15, 0);
-// //   // if ("o" in inputKeys) moveCam(0, 15);
-// //   // if ("l" in inputKeys) moveCam(0, -15);
-// //   if ("ArrowLeft" in inputKeys) Me.control(-1, 0);
-// //   if ("ArrowRight" in inputKeys) Me.control(1, 0);
-// //   if ("ArrowUp" in inputKeys) Me.control(0, 0.02);
-// //   if ("ArrowDown" in inputKeys) Me.control(0, -0.2);
-// //   // if ("a" in inputKeys) Me.control(-1, 0);
-// //   // if ("d" in inputKeys) Me.control(1, 0);
-// //   // if ("w" in inputKeys) Me.control(0, 0.02);
-// //   // if ("s" in inputKeys) Me.control(0, -0.2);
-// //   // if (" " in inputKeys) Me.meleeAttack();
-// //   if ("`" in inputKeys) gameTick();
-// //   // if (inputKeys.includes("q")) console.log(
-// //   //   // SCENEMANAGER.currentScene.camera.inView(new Vector2()).toString()
-// //   // );
-// //   // CAMERA.forceCenterCam(Me.body.coordinates)
-// // }
+// export function keyInput(inputKeys: string[]): void{
+//   // if ("k" in inputKeys) moveCam(-15, 0);
+//   // if (";" in inputKeys) moveCam(15, 0);
+//   // if ("o" in inputKeys) moveCam(0, 15);
+//   // if ("l" in inputKeys) moveCam(0, -15);
+//   if ("ArrowLeft" in inputKeys) Me.control(-1, 0);
+//   if ("ArrowRight" in inputKeys) Me.control(1, 0);
+//   if ("ArrowUp" in inputKeys) Me.control(0, 0.02);
+//   if ("ArrowDown" in inputKeys) Me.control(0, -0.2);
+//   // if ("a" in inputKeys) Me.control(-1, 0);
+//   // if ("d" in inputKeys) Me.control(1, 0);
+//   // if ("w" in inputKeys) Me.control(0, 0.02);
+//   // if ("s" in inputKeys) Me.control(0, -0.2);
+//   // if (" " in inputKeys) Me.meleeAttack();
+//   if ("`" in inputKeys) gameTick();
+//   // if (inputKeys.includes("q")) console.log(
+//   //   // SCENEMANAGER.currentScene.camera.inView(new Vector2()).toString()
+//   // );
+//   // CAMERA.forceCenterCam(Me.body.coordinates)
+// }
 // // export function genFrame(): void {
 // //   SCENEMANAGER.currentScene.camera.centerCam(Me.body.center());
 // //   SCENEMANAGER.render();

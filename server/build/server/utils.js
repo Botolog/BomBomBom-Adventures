@@ -1,8 +1,10 @@
+import { DC, KEY as KEY, Vector2 } from "../shared/defs.js";
+export const Zvec = new Vector2();
 export class Properties {
     constructor() {
         this.hp = 100;
         this.speedK = 1;
-        this.jumpK = 1;
+        this.jumpK = 7;
         this.meleeDamage = 10;
         this.meleeRange = 50;
         this.specialDamage = 20;
@@ -10,18 +12,41 @@ export class Properties {
         this.canWallJump = false;
         this.dashSpeed = 10;
         this.maxSpeed = 10;
+        this.vecs = new Map([
+            [KEY.LEFT, new Vector2(-1, 0)],
+            [KEY.RIGHT, new Vector2(1, 0)],
+            [KEY.UP, new Vector2(0, 0.02)],
+            [KEY.DOWN, new Vector2(0, -0.2)],
+        ]);
+    }
+    getVec(key) {
+        let vec = this.vecs.get(key);
+        // console.log(vec, key)
+        if (vec)
+            return vec;
+        return Zvec.clone();
+    }
+    keysToVec(c) {
+        const totalV = Zvec.clone();
+        c.forEach(byte => {
+            console.log();
+            totalV.addV(this.getVec(byte));
+        });
+        return totalV;
     }
 }
-export var RC;
-(function (RC) {
-    RC[RC["SET_UID"] = 0] = "SET_UID";
-    RC[RC["SET_POS"] = 1] = "SET_POS";
-    RC[RC["GET_ENV"] = 2] = "GET_ENV";
-})(RC || (RC = {}));
+export function addCode(code, data) {
+    const buff = data.buffer;
+    const newBuff = new ArrayBuffer(buff.byteLength + 1);
+    const newView = new Uint8Array(newBuff);
+    newView[0] = code; // Set the new first byte
+    newView.set(new Uint8Array(buff), 1); // Copy the old data after the first byte
+    return newBuff;
+}
 export class Conn {
     constructor(CM, ws, uid = "=") {
         this.uid = "=";
-        this.commands = Array.from({ length: 50 }, () => () => { });
+        this.commands = Array.from({ length: 256 }, () => () => { });
         this.manager = CM;
         this.ws = ws;
         if (uid !== "=") {
@@ -39,7 +64,8 @@ export class Conn {
             this.destroy();
         });
         this.manager.addConn(this);
-        this.initCommand(RC.SET_UID, (c) => { this.uid = String.fromCharCode(...c); });
+        this.initCommand(DC.SET_UID, (c) => { this.uid = String.fromCharCode(...c); });
+        // this.initCommand(DC.DEBUG, (c) => {console.warn("DEBUG: ", c);})
         this.ws.on("message", async (bytes) => {
             // const msg = bytes.readFloatLE(0)
             const msg = bytes;
@@ -51,7 +77,10 @@ export class Conn {
     }
     initCommand(Rcode, command) {
         this.commands[Rcode] = command;
-        console.log(this.commands);
+        // console.log(this.commands)
+    }
+    sendData(code, data) {
+        this.ws.send(addCode(code, data));
     }
     destroy() {
         let index = this.manager.connections.indexOf(this);

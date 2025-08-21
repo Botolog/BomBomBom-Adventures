@@ -1,10 +1,12 @@
 import * as E from "./Engine.js";
+import { DC, KEY as KEY, INFO, Vector2 } from "../shared/defs.js";
 
+export const Zvec = new Vector2()
 
 export class Properties {
     hp: number = 100;
     speedK: number = 1;
-    jumpK: number = 1;
+    jumpK: number = 7;
     meleeDamage: number = 10;
     meleeRange: number = 50;
     specialDamage: number = 20;
@@ -12,23 +14,51 @@ export class Properties {
     canWallJump: boolean = false;
     dashSpeed: number = 10;
     maxSpeed: number = 10;
+
+    vecs: Map<KEY, Vector2> = new Map<KEY, Vector2>([
+        [KEY.LEFT, new Vector2(-1, 0)],
+        [KEY.RIGHT, new Vector2(1, 0)],
+        [KEY.UP, new Vector2(0, 0.02)],
+        [KEY.DOWN, new Vector2(0, -0.2)],
+
+    ])
+
+    getVec(key: KEY): Vector2 {
+        let vec = this.vecs.get(key)
+        // console.log(vec, key)
+        if (vec) return vec
+        return Zvec.clone();
+    }
+
+    keysToVec(c: Buffer): Vector2 {
+        const totalV = Zvec.clone();
+        c.forEach(byte=>{
+            console.log()
+            totalV.addV(this.getVec(byte))
+        })
+        return totalV;
+    }
 }
 
-export enum RC {
-    SET_UID = 0,
-    SET_VEL = 1,
-    GET_ENV = 2,
-    GET_POS = 3
-
-}
 
 export type messageFunc = (content: Buffer) => void;
+
+export function addCode(code: DC, data: Buffer): ArrayBuffer{
+    const buff = data.buffer
+    
+    const newBuff = new ArrayBuffer(buff.byteLength + 1);
+    const newView = new Uint8Array(newBuff);
+    
+    newView[0] = code; // Set the new first byte
+    newView.set(new Uint8Array(buff), 1); // Copy the old data after the first byte
+    return newBuff;
+}
 
 export class Conn {
     ws: any;
     uid: string = "=";
     manager: ConnManager;
-    commands: messageFunc[] = Array.from({ length: 50 }, () => () => {});
+    commands: messageFunc[] = Array.from({ length: 256 }, () => () => {});
     constructor(CM: ConnManager, ws: any, uid: string = "=") {
         this.manager = CM;
         this.ws = ws;
@@ -51,7 +81,9 @@ export class Conn {
 
         this.manager.addConn(this)
 
-        this.initCommand(RC.SET_UID, (c: Buffer) => { this.uid = String.fromCharCode(...c); })
+        this.initCommand(DC.SET_UID, (c: Buffer) => { this.uid = String.fromCharCode(...c); })
+
+        // this.initCommand(DC.DEBUG, (c) => {console.warn("DEBUG: ", c);})
 
         this.ws.on("message", async (bytes: any) => {
             // const msg = bytes.readFloatLE(0)
@@ -63,9 +95,13 @@ export class Conn {
         })
     }
 
-    initCommand(Rcode: RC, command: messageFunc): void {
+    initCommand(Rcode: DC, command: messageFunc): void {
         this.commands[Rcode] = command;
-        console.log(this.commands)
+        // console.log(this.commands)
+    }
+
+    sendData(code: DC, data: any): void{
+        this.ws.send(addCode(code, data));
     }
 
     destroy(): void {

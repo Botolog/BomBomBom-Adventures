@@ -1,4 +1,6 @@
-const wsUrl = 'ws://localhost:8765';
+import {DC,KEY, INFO} from "./../shared/build/defs.js"
+
+const wsUrl = `ws://localhost:${INFO.PORT}`;
 let socket;
 let reconnectInterval = 3000; // 3 seconds
 
@@ -19,6 +21,14 @@ function str2uint(data) {
     buff[i] = data.charCodeAt(i);
   }
   return buff;
+}
+
+function vecFromBuff(data) {
+    const vec = new Float32Array(2);
+    vec[0] = data.readFloatLE(0);
+    vec[1] = data.readFloatLE(4);
+
+    return vec;
 }
 
 function addCode(code, data){
@@ -47,37 +57,36 @@ function connectWebSocket() {
         // For Node.js, you would instantiate a new 'WebSocket' object from the 'ws' library.
         // Example for Node.js: const WebSocket = require('ws'); const socket = new WebSocket(wsUrl);
         socket = new WebSocket(wsUrl);
-        // socket.binaryType
+        socket.binaryType = "arraybuffer"
 
         // Event listener for a successful connection
         socket.onopen = () => {
             console.log('Connected to WebSocket server!');
             // You can now send messages, for example:
-            sendDataToServer(addCode(0, str2uint('Botolog')));
+            sendDataToServer(addCode(DC.SET_UID, str2uint('Botolog')));
             // You could also set up a recurring ping here
-            setInterval(() => {
-              pos[0]+=1
-              sendDataToServer(addCode(1, pos))
+            // setInterval(() => {
+            //   pos[0]+=1
+            //   sendDataToServer(addCode(1, pos))
             //   if (pos[0]%100==0){
             //     console.log(pos)
             //   }
-            }, 100);
+            // }, 100);
         };
 
         // Event listener for incoming messages from the server
         socket.onmessage = event => {
-            // sendMessageToServer(event.data);
-            console.log('Message from server:', event.data);
-            // Parse the JSON data received from the server
-            try {
-                const data = JSON.parse(event.data);
-                if (data.type === 'message') {
-                    console.log(`Server message content: ${data.content}`);
-                }
-            } catch (e) {
-                // console.error("Failed to parse message:", e);
+            const data = event.data; 
+            const codeView = new Uint8Array(data); 
+            const code = codeView[0]; 
+            const content = data.slice(1);
+            const contentView = new Float32Array(content)
+
+            if (code === DC.DEBUG) {
+              return
             }
-        };
+            console.warn(`DEBUG ${code}: `, contentView[0].toFixed(0));
+          };
 
         // Event listener for when the connection is closed
         socket.onclose = () => {
@@ -110,9 +119,9 @@ import {
 //   // getCtx,
   height,
 //   genFrame,
+//   areSetsEqual,
   width
 //   iColorConv,
-//   keyInput,
 //   scaleScreen,
 //   // sc
 } from "./build/release.js";
@@ -165,6 +174,35 @@ function renderFrame() {
   // ctx.putImageData(imgData, 0, 0, 0, 0, );
 }
 
+export function areSetsEqual(setA, setB) {
+  // Check if the sizes are different first, which is the fastest check.
+  // If the sizes don't match, the sets cannot be equal.
+  if (!setB) {
+    return false;
+  }
+
+  if (setA.size !== setB.size) {
+    return false;
+  }
+
+  // Iterate over each element of setA.
+  // The 'for...of' loop is a great way to iterate over iterables in AssemblyScript
+  // without creating a closure.
+  for (const element of setA) {
+    // For each element, check if the other set (setB) contains it.
+    // The `has()` method on a Set is very efficient (average O(1)).
+    // If we find even one element from setA that is not in setB, we can
+    // immediately return false, as the sets are not equal.
+    if (!setB.has(element)) {
+      return false;
+    }
+  }
+
+  // If the function reaches this point, it means all elements in setA were
+  // found in setB, and the sizes were equal. Therefore, the sets are equal.
+  return true;
+}
+
 // function testFPS(timeOfTest, framesToRender=100) {
 //   let start = Date.now();
 //   let end = start + timeOfTest * 1000;
@@ -202,29 +240,67 @@ function renderFrame() {
 // // }, 1000);
 
 
-// // // listen for keys
-// // document.addEventListener("keydown", (e) => {
-// //   if (e.key == "`") testFPS(1);
-// //   if (e.key == "p") {}
-// // });
-
-// const keysPressed = new Set();
-// let s = 50;
+// // listen for keys
 // document.addEventListener("keydown", (e) => {
-//   keysPressed.add(e.key);
-//   if (e.key == "-") scaleScreen((--s)/100);
-//   if (e.key == "=") scaleScreen((++s)/100);
+//   if (e.key == "`") testFPS(1);
+//   if (e.key == "p") {}
 // });
 
-// document.addEventListener("keyup", (e) => {
-//   keysPressed.delete(e.key);
-// });
+function keyInput(inputKeys){
+  let toSend = []
+  // if ("k" in inputKeys) moveCam(-15, 0);
+  // if (";" in inputKeys) moveCam(15, 0);
+  // if ("o" in inputKeys) moveCam(0, 15);
+  // if ("l" in inputKeys) moveCam(0, -15);
+  if (inputKeys.has("ArrowLeft"))  toSend.push(KEY.LEFT)
+  if (inputKeys.has("ArrowRight")) toSend.push(KEY.RIGHT)
+  if (inputKeys.has("ArrowUp"))    toSend.push(KEY.UP)
+  if (inputKeys.has("ArrowDown"))  toSend.push(KEY.DOWN)
+  // if ("a" in inputKeys) Me.control(-1, 0);
+  // if ("d" in inputKeys) Me.control(1, 0);
+  // if ("w" in inputKeys) Me.control(0, 0.02);
+  // if ("s" in inputKeys) Me.control(0, -0.2);
+  // if (" " in inputKeys) Me.meleeAttack();
+  // if ("`" in inputKeys) gameTick();
+  // if (inputKeys.includes("q")) console.log(
 
-// document.addEventListener("wheel", (e)=>{
-//   // console.log(e);
-//   if (e.deltaY < 0) scaleScreen((++s)/100)
-//   else scaleScreen((--s)/100)
+  //   // SCENEMANAGER.currentScene.camera.inView(new Vector2()).toString()
+  // );
+  // CAMERA.forceCenterCam(Me.body.coordinates)
+  return new Uint8Array(toSend)
+}
+
+let lastState = new Set()
+function sendKeys(keys) {
+    const data = keyInput(keys);
+    if (!areSetsEqual(keys, lastState)){
+        sendDataToServer(addCode(DC.SET_KEY, data));
+        lastState = new Set(keys)
+    }
+}
+
+
+const keysPressed = new Set();
+// keysPressed.
+let s = 50;
+document.addEventListener("keydown", (e) => {
+  keysPressed.add(e.key);
+  if (e.key == "-") scaleScreen((--s)/100);
+  if (e.key == "=") scaleScreen((++s)/100);
+  sendKeys(keysPressed)
+});
+
+document.addEventListener("keyup", (e) => {
+  keysPressed.delete(e.key);
+  sendKeys(keysPressed)
+});
+
+document.addEventListener("wheel", (e)=>{
+  // console.log(e);
+  if (e.deltaY < 0) scaleScreen((++s)/100)
+  else scaleScreen((--s)/100)
   
-// })
+})
+
 
 // scaleScreen(s/100)

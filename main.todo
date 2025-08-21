@@ -1,5 +1,5 @@
-TODO: convert Vector2 to Buffer 
 TODO: make server return shit
+TODO: make client get returns quickly 
 TODO: player gives velocity (or controls) and gets back his coordinates
 TODO: player gets environment bodies and players pos
 TODO: render
