@@ -1,56 +1,28 @@
-import {DC,KEY, INFO} from "./../shared/build/defs.js"
-
-const wsUrl = `ws://localhost:${INFO.PORT}`;
-let socket;
-let reconnectInterval = 3000; // 3 seconds
-
-// Function to handle sending a message to the server
-// For a headless client, this could be used for automated testing or pings.
-function sendDataToServer(data) {
-    if (socket && socket.readyState === 1) { // WebSocket.OPEN = 1
-        socket.send(data)
-        // console.log(data)
-    } else {
-        console.log('Socket not open, message not sent.');
-    }
-}
-
-function str2uint(data) {
-  const buff = new Uint8Array(data.length);
-  for (let i = 0; i < data.length; i++) {
-    buff[i] = data.charCodeAt(i);
-  }
-  return buff;
-}
-
-function vecFromBuff(data) {
-    const vec = new Float32Array(2);
-    vec[0] = data.readFloatLE(0);
-    vec[1] = data.readFloatLE(4);
-
-    return vec;
-}
-
-function addCode(code, data){
-    const buff = data.buffer
+import { DC, KEY, INFO } from "../shared/build/defs.js"
+import {
+  addCode,
+  areSetsEqual,
+  boxFromBuff,
+  boxsFromBuff,
+  sendDataToServer,
+  str2uint,
+  vecFromBuff,
+  Box,
+  canvas,
+  ctx,
+  reconnectInterval,
+  wsUrl,
+  drawBoxs,
     
-    const newBuff = new ArrayBuffer(buff.byteLength + 1);
-    const newView = new Uint8Array(newBuff);
-    
-    newView[0] = code; // Set the new first byte
-    newView.set(new Uint8Array(buff), 1); // Copy the old data after the first byte
-    return newBuff;
-}
+
+} from "./defs.js"
 
 
-
-const pos = new Float32Array(2)
-
-// This function will be called to connect to the WebSocket server
-function connectWebSocket() {
+export let socket;
+export function connectWebSocket() {
     try {
         console.log(`Attempting to connect to ${wsUrl}...`);
-        
+
         // Create a new WebSocket connection
         // Note: When running this in Node.js, you would need a WebSocket client library
         // like 'ws'. This code assumes a browser-like environment where WebSocket is global.
@@ -76,17 +48,18 @@ function connectWebSocket() {
 
         // Event listener for incoming messages from the server
         socket.onmessage = event => {
-            const data = event.data; 
-            const codeView = new Uint8Array(data); 
-            const code = codeView[0]; 
+            const data = event.data;
+            const codeView = new Uint8Array(data);
+            const code = codeView[0];
             const content = data.slice(1);
-            const contentView = new Float32Array(content)
 
-            if (code === DC.DEBUG) {
-              return
+            // console.warn(`DEBUG ${code}: `, codeView);
+            if (code === DC.SET_ENV) {
+                const boxs = boxsFromBuff(content)
+                drawBoxs(boxs);
+                return
             }
-            console.warn(`DEBUG ${code}: `, contentView[0].toFixed(0));
-          };
+        };
 
         // Event listener for when the connection is closed
         socket.onclose = () => {
@@ -111,151 +84,16 @@ function connectWebSocket() {
 connectWebSocket();
 
 
-
-
-
-import {
-//   gameTick,
-//   // getCtx,
-  height,
-//   genFrame,
-//   areSetsEqual,
-  width
-//   iColorConv,
-//   scaleScreen,
-//   // sc
-} from "./build/release.js";
-
-// import { applyNoise, applyChromaticAberration, applyScanlines } from "./effects.js";
-
-
-// // i have array of all of the rgba values of the pixels of the image displayed on the canvas
-// // i want to display the frame on the canvas
-
-const WIDTH = width.value;
-const HEIGHT = height.value;
-
-let canvas = document.getElementById("canvas");
-canvas.width = WIDTH;
-canvas.height = HEIGHT;
-const mod = 1.3; 
-canvas.style.width = mod*WIDTH + "px";
-canvas.style.height = mod*HEIGHT + "px";
-
-let ctx = canvas.getContext("2d", { willReadFrequently: false });
-ctx.imageSmoothingEnabled = false;
-let imgData = ctx.createImageData(1*WIDTH, 1*HEIGHT);
-
-
-// function gameLoop(timestamp) {
-//     keyInput(Array.from(keysPressed));
-//     gameTick(1);
-//     // console.log(Array.from(keysPressed));
-    
-//   requestAnimationFrame(gameLoop);
-// }
-
-// // Start the game loop
-// requestAnimationFrame(gameLoop);
-
-
-function renderFrame() {
-  //   iColorConv();
-  imgData.data.set(iColorConv());
-  // imgData.data.set(applyChromaticAberration(imgData.data));
-  // imgData.data.set(applyNoise(imgData.data));
-  // imgData.data.set(applyScanlines(imgData.data, WIDTH, HEIGHT));
-  
-  ctx.putImageData(imgData, 0, 0)
-  // for (let i = 0; i < imgData.data.length; i++) {
-  //   imgData.data[i] = 50;
-  // }
-  //   imgData.data.set(getCtx());
-  // ctx.putImageData(imgData, 0, 0, 0, 0, );
-}
-
-export function areSetsEqual(setA, setB) {
-  // Check if the sizes are different first, which is the fastest check.
-  // If the sizes don't match, the sets cannot be equal.
-  if (!setB) {
-    return false;
-  }
-
-  if (setA.size !== setB.size) {
-    return false;
-  }
-
-  // Iterate over each element of setA.
-  // The 'for...of' loop is a great way to iterate over iterables in AssemblyScript
-  // without creating a closure.
-  for (const element of setA) {
-    // For each element, check if the other set (setB) contains it.
-    // The `has()` method on a Set is very efficient (average O(1)).
-    // If we find even one element from setA that is not in setB, we can
-    // immediately return false, as the sets are not equal.
-    if (!setB.has(element)) {
-      return false;
-    }
-  }
-
-  // If the function reaches this point, it means all elements in setA were
-  // found in setB, and the sizes were equal. Therefore, the sets are equal.
-  return true;
-}
-
-// function testFPS(timeOfTest, framesToRender=100) {
-//   let start = Date.now();
-//   let end = start + timeOfTest * 1000;
-//   let i = 0;
-
-//   while (Date.now() < end) {
-//     genFrame();
-//     renderFrame();
-
-//     i++;
-//   }
-//   console.log("[1] FPS at testing", i / timeOfTest);
-
-//   start = Date.now()
-//   for (let i=0; i<framesToRender; i++){
-//     genFrame()
-//     renderFrame()
-//   }
-//   end = Date.now();
-//   console.log("[2] FPS at testing", Math.round((1000*framesToRender)/(end-start)));
-
-// }
-
-// // setInterval(sc, 10);
-// // setTimeout(() => {
-// //   scaleScreen(0.5)
-// //   testFPS(1);
-  
-//   setInterval(() => {
-//     genFrame();
-//     // gameTick();
-//     renderFrame();
-//     // console.log('frame rendered');
-//   }, 1);
-// // }, 1000);
-
-
-// // listen for keys
-// document.addEventListener("keydown", (e) => {
-//   if (e.key == "`") testFPS(1);
-//   if (e.key == "p") {}
-// });
-
-function keyInput(inputKeys){
+function keyInput(inputKeys) {
   let toSend = []
   // if ("k" in inputKeys) moveCam(-15, 0);
   // if (";" in inputKeys) moveCam(15, 0);
   // if ("o" in inputKeys) moveCam(0, 15);
   // if ("l" in inputKeys) moveCam(0, -15);
-  if (inputKeys.has("ArrowLeft"))  toSend.push(KEY.LEFT)
+  if (inputKeys.has("ArrowLeft")) toSend.push(KEY.LEFT)
   if (inputKeys.has("ArrowRight")) toSend.push(KEY.RIGHT)
-  if (inputKeys.has("ArrowUp"))    toSend.push(KEY.UP)
-  if (inputKeys.has("ArrowDown"))  toSend.push(KEY.DOWN)
+  if (inputKeys.has("ArrowUp")) toSend.push(KEY.UP)
+  if (inputKeys.has("ArrowDown")) toSend.push(KEY.DOWN)
   // if ("a" in inputKeys) Me.control(-1, 0);
   // if ("d" in inputKeys) Me.control(1, 0);
   // if ("w" in inputKeys) Me.control(0, 0.02);
@@ -272,11 +110,11 @@ function keyInput(inputKeys){
 
 let lastState = new Set()
 function sendKeys(keys) {
-    const data = keyInput(keys);
-    if (!areSetsEqual(keys, lastState)){
-        sendDataToServer(addCode(DC.SET_KEY, data));
-        lastState = new Set(keys)
-    }
+  const data = keyInput(keys);
+  if (!areSetsEqual(keys, lastState)) {
+    sendDataToServer(addCode(DC.SET_KEY, data));
+    lastState = new Set(keys)
+  }
 }
 
 
@@ -285,8 +123,8 @@ const keysPressed = new Set();
 let s = 50;
 document.addEventListener("keydown", (e) => {
   keysPressed.add(e.key);
-  if (e.key == "-") scaleScreen((--s)/100);
-  if (e.key == "=") scaleScreen((++s)/100);
+  if (e.key == "-") scaleScreen((--s) / 100);
+  if (e.key == "=") scaleScreen((++s) / 100);
   sendKeys(keysPressed)
 });
 
@@ -295,12 +133,12 @@ document.addEventListener("keyup", (e) => {
   sendKeys(keysPressed)
 });
 
-document.addEventListener("wheel", (e)=>{
-  // console.log(e);
-  if (e.deltaY < 0) scaleScreen((++s)/100)
-  else scaleScreen((--s)/100)
-  
-})
+// document.addEventListener("wheel", (e) => {
+//   // console.log(e);
+//   if (e.deltaY < 0) scaleScreen((++s) / 100)
+//   else scaleScreen((--s) / 100)
+
+// })
 
 
 // scaleScreen(s/100)

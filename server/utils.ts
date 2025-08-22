@@ -42,13 +42,13 @@ export class Properties {
 export type messageFunc = (content: Buffer) => void;
 
 export function addCode(code: DC, data: Buffer): ArrayBuffer{
-    const buff = data.buffer
+    const buff = data
     
     const newBuff = new ArrayBuffer(buff.byteLength + 1);
     const newView = new Uint8Array(newBuff);
     
     newView[0] = code; // Set the new first byte
-    newView.set(new Uint8Array(buff), 1); // Copy the old data after the first byte
+    newView.set(new Uint8Array(buff), 1); 
     return newBuff;
 }
 

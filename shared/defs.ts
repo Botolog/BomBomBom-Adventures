@@ -5,6 +5,7 @@ export enum DC {
     GET_POS = 3,
     SET_POS = 4,
     SET_KEY = 5,
+    SET_ENV = 6,
 
     DEBUG = 255
 
@@ -20,7 +21,8 @@ export enum KEY {
 }
 
 export enum INFO {
-    PORT = 8765
+    PORT = 8765,
+    FLAGBUFFLEN = 4,
 }
 
 export enum Direction {
@@ -32,11 +34,11 @@ export enum Direction {
 }
 
 export enum FLAG {
-    ANY = -1,
-    GROUND = 0,
-    PLAYER = 1,
-    DEATH = 2,
-    FINISH = 3
+    ANY = 1,
+    GROUND = 2,
+    PLAYER = 3,
+    DEATH = 4,
+    FINISH = 5
 }
 
 export class Hitbox { x1!: number; y1!: number; x2!: number; y2!: number; }
@@ -132,4 +134,12 @@ export class Vector2 {
         data[0] = this.x; data[1] = this.y;
         return Buffer.from(data.buffer);
     }
+}
+
+export function flagsToByte(flags: FLAG[]): Buffer {
+    const bytes = new Uint8Array(4);
+    for (let i = 0; i < Math.min(flags.length, bytes.length); i++) {
+        bytes[i] = flags[i];
+    }
+    return Buffer.from(bytes.buffer);
 }

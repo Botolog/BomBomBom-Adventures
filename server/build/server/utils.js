@@ -21,7 +21,6 @@ export class Properties {
     }
     getVec(key) {
         let vec = this.vecs.get(key);
-        // console.log(vec, key)
         if (vec)
             return vec;
         return Zvec.clone();
@@ -29,18 +28,17 @@ export class Properties {
     keysToVec(c) {
         const totalV = Zvec.clone();
         c.forEach(byte => {
-            console.log();
             totalV.addV(this.getVec(byte));
         });
         return totalV;
     }
 }
 export function addCode(code, data) {
-    const buff = data.buffer;
+    const buff = data;
     const newBuff = new ArrayBuffer(buff.byteLength + 1);
     const newView = new Uint8Array(newBuff);
     newView[0] = code; // Set the new first byte
-    newView.set(new Uint8Array(buff), 1); // Copy the old data after the first byte
+    newView.set(new Uint8Array(buff), 1);
     return newBuff;
 }
 export class Conn {
@@ -71,13 +69,12 @@ export class Conn {
             const msg = bytes;
             const code = msg[0];
             const content = msg.slice(1);
-            console.log(msg);
+            // console.log(msg)
             this.commands[code](content);
         });
     }
     initCommand(Rcode, command) {
         this.commands[Rcode] = command;
-        // console.log(this.commands)
     }
     sendData(code, data) {
         this.ws.send(addCode(code, data));

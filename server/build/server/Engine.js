@@ -2,11 +2,14 @@ import {
 // CAMERA,
 width, height, } from "./index.js";
 import { Properties, Zvec } from "./utils.js";
-import { Vector2, DC, Direction, FLAG, min4 } from "../shared/defs.js";
+import { Vector2, DC, Direction, FLAG, min4, flagsToByte, INFO } from "../shared/defs.js";
 const Width = width;
 const Height = height;
 export class Body {
     constructor(manager, width = 0, height = 0) {
+        // width: number;
+        // height: number;
+        this.size = new Vector2();
         this.friction = new Vector2(1, 1);
         this.staticObj = false;
         this.hasHitbox = true;
@@ -14,8 +17,8 @@ export class Body {
         this.toRender = true;
         this.speedLim = 20;
         this.scripts = [];
-        this.width = width;
-        this.height = height;
+        this.size.x = width;
+        this.size.y = height;
         this.coordinates = new Vector2();
         this.velocity = new Vector2();
         this.gravity = new Vector2();
@@ -27,8 +30,8 @@ export class Body {
         return {
             x1: this.coordinates.x,
             y1: this.coordinates.y,
-            x2: this.coordinates.x + this.width,
-            y2: this.coordinates.y + this.height
+            x2: this.coordinates.x + this.size.x,
+            y2: this.coordinates.y + this.size.y
         };
     }
     center() {
@@ -97,10 +100,8 @@ export class Body {
         let colds = this.manager.collidesWithSomething(this);
         let mod = new Vector2(1, 1);
         for (let i = 0; i < colds.length; i++) {
-            // console.log(colds[i].body.friction.toString());
             mod.multiplyV(colds[i].friction);
         }
-        // console.log(mod.toString());
         return mod;
     }
     exeScripts() {
@@ -114,9 +115,8 @@ export class Body {
         this.velocity.addV(this.gravity.CmultiplyS(dt));
         this.velocity.multiplyV(this.drag.CmultiplyV(this.calcFriction()));
         // this.velocity.x = absMin(this.velocity.x, this.speedLim)
-        // console.log(this.velocity.toString());
         this.coordinates.addV(this.velocity.CmultiplyS(dt).absMin(this.speedLim));
-        let colds = this.manager.collidesWithSomething(this, FLAG.GROUND);
+        let colds = this.manager.collidesWithSomething(this, FLAG.ANY);
         for (let i = 0; i < colds.length; i++) {
             const col = colds[i];
             const side = this.sideCollide(col);
@@ -126,16 +126,16 @@ export class Body {
                 this.velocity.x *= 0.01;
             switch (side) {
                 case Direction.UP:
-                    this.coordinates.y = col.coordinates.y - this.height;
+                    this.coordinates.y = col.coordinates.y - this.size.y;
                     break;
                 case Direction.DOWN:
-                    this.coordinates.y = col.coordinates.y + col.height;
+                    this.coordinates.y = col.coordinates.y + col.size.y;
                     break;
                 case Direction.LEFT:
-                    this.coordinates.x = col.coordinates.x + col.width;
+                    this.coordinates.x = col.coordinates.x + col.size.x;
                     break;
                 case Direction.RIGHT:
-                    this.coordinates.x = col.coordinates.x - this.width;
+                    this.coordinates.x = col.coordinates.x - this.size.x;
                     break;
                 default:
                     break;
@@ -166,8 +166,8 @@ export class Body {
     //         this.manager.scene.camera.canvas.ctx.drawRect(
     //             this.coordinates.x - offset.x,
     //             this.coordinates.y - offset.y,
-    //             this.width,
-    //             this.height,
+    //             this.size.x,
+    //             this.size.y,
     //             iColor(255, 0, 0)
     //         );
     //     }
@@ -178,6 +178,14 @@ export class Body {
     destroy() {
         let index = this.manager.bodies.indexOf(this);
         this.manager.bodies.splice(index, 1);
+    }
+    toByte() {
+        const pos = this.coordinates.toByte();
+        const size = this.size.toByte();
+        const flags = flagsToByte(this.flags);
+        const total = [flags, pos, size];
+        // console.warn(total);
+        return Buffer.concat(total, 16 + INFO.FLAGBUFFLEN);
     }
 }
 export class Entity {
@@ -204,21 +212,21 @@ export class Entity {
         this.body.update(dt);
     }
     addFlag(flag) {
-        if (flag in this.flags)
-            return;
-        this.flags.push(flag);
+        return this.body.addFlag(flag);
+        // if (flag in this.flags) return;
+        // this.flags.push(flag);
     }
     addFlags(flags) {
-        for (let i = 0; i < flags.length; i++) {
-            if (flags[i] in this.flags)
-                return;
-            this.flags.push(flags[i]);
-        }
+        return this.body.addFlags(flags);
+        // for (let i = 0; i < flags.length; i++) {
+        //     if (flags[i] in this.flags) return;
+        //     this.flags.push(flags[i]);
+        // }
     }
     hasFlag(flag) {
-        if (flag == FLAG.ANY)
-            return true;
-        return flag in this.flags;
+        return this.body.hasFlag(flag);
+        // if (flag == FLAG.ANY) return true;
+        // return flag in this.flags;
     }
     destroy() {
         this.body.destroy();
@@ -231,10 +239,10 @@ export class Player extends Entity {
         super(entityManager, bodyManager);
         this.properties = new Properties();
         this.currentControl = Zvec.clone();
-        this.mAttackB = new Body(bodyManager, 0, 0);
-        this.mAttackB.staticObj = true;
-        this.body.width = 20;
-        this.body.height = 20;
+        // this.mAttackB = new Body(bodyManager, 0, 0);
+        // this.mAttackB.staticObj = true;
+        this.body.size.x = 20;
+        this.body.size.y = 20;
         this.body.gravity.set(new Vector2(0, -0.25));
         // this.body.velocity.y = -10;
         this.body.drag = new Vector2(0.9, 0.99);
@@ -261,7 +269,8 @@ export class Player extends Entity {
     jump() {
         const vj = this.properties.jumpK / 2;
         const hj = 13;
-        let colds = this.body.manager.sidesThatCollides(this.body, FLAG.GROUND);
+        let colds = this.body.manager.sidesThatCollides(this.body, FLAG.ANY);
+        console.log(colds);
         if (colds.length > 0) {
             if (Direction.UP in colds)
                 return;
@@ -281,13 +290,11 @@ export class Player extends Entity {
                 this.body.coordinates.y += 3;
                 this.body.velocity.y = this.properties.jumpK;
             }
-            // console.log("jumped");
         }
     }
     control(vec) {
         if (Math.abs(vec.x) > 0.1)
             this.facingRight = vec.x > 0;
-        // console.log(this.facingRight.toString())
         if (this.manager.collidesWithSomething(this).length == 0)
             vec.x *= 0.7;
         this.body.velocity.addV(vec);
@@ -296,7 +303,6 @@ export class Player extends Entity {
     }
     update(dt) {
         this.control(this.currentControl.clone());
-        console.log("P updated call", this.currentControl);
         super.update(dt);
     }
     destroy() {
@@ -350,7 +356,7 @@ export class BodyManager {
         let collidedBodies = [];
         // return this.entities.some(another => entity !== another && entity.body.collide(another.body));
         for (let i = 0; i < this.bodies.length; i++) {
-            if (body !== this.bodies[i] && body.collide(this.bodies[i]) && this.bodies[i].hasFlag(flag)) {
+            if (body != this.bodies[i] && this.bodies[i].hasFlag(flag) && body.collide(this.bodies[i])) {
                 collidedBodies.push(this.bodies[i]);
             }
         }
@@ -368,6 +374,16 @@ export class BodyManager {
         for (let i = 0; i < this.bodies.length; i++) {
             this.bodies[i].update(dt);
         }
+    }
+    toByte() {
+        let data = [];
+        for (let i = 0; i < this.bodies.length; i++) {
+            if (!this.bodies[i].hasFlag(FLAG.PLAYER)) {
+                data.push(this.bodies[i].toByte());
+            }
+        }
+        // console.log(data)
+        return Buffer.concat(data, data.length * (16 + INFO.FLAGBUFFLEN));
     }
 }
 export class EntityManager {

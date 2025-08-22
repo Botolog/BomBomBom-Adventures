@@ -6,6 +6,7 @@ export var DC;
     DC[DC["GET_POS"] = 3] = "GET_POS";
     DC[DC["SET_POS"] = 4] = "SET_POS";
     DC[DC["SET_KEY"] = 5] = "SET_KEY";
+    DC[DC["SET_ENV"] = 6] = "SET_ENV";
     DC[DC["DEBUG"] = 255] = "DEBUG";
 })(DC || (DC = {}));
 export var KEY;
@@ -19,6 +20,7 @@ export var KEY;
 export var INFO;
 (function (INFO) {
     INFO[INFO["PORT"] = 8765] = "PORT";
+    INFO[INFO["FLAGBUFFLEN"] = 4] = "FLAGBUFFLEN";
 })(INFO || (INFO = {}));
 export var Direction;
 (function (Direction) {
@@ -30,11 +32,11 @@ export var Direction;
 })(Direction || (Direction = {}));
 export var FLAG;
 (function (FLAG) {
-    FLAG[FLAG["ANY"] = -1] = "ANY";
-    FLAG[FLAG["GROUND"] = 0] = "GROUND";
-    FLAG[FLAG["PLAYER"] = 1] = "PLAYER";
-    FLAG[FLAG["DEATH"] = 2] = "DEATH";
-    FLAG[FLAG["FINISH"] = 3] = "FINISH";
+    FLAG[FLAG["ANY"] = 1] = "ANY";
+    FLAG[FLAG["GROUND"] = 2] = "GROUND";
+    FLAG[FLAG["PLAYER"] = 3] = "PLAYER";
+    FLAG[FLAG["DEATH"] = 4] = "DEATH";
+    FLAG[FLAG["FINISH"] = 5] = "FINISH";
 })(FLAG || (FLAG = {}));
 export class Hitbox {
 }
@@ -112,4 +114,11 @@ export class Vector2 {
         data[1] = this.y;
         return Buffer.from(data.buffer);
     }
+}
+export function flagsToByte(flags) {
+    const bytes = new Uint8Array(4);
+    for (let i = 0; i < Math.min(flags.length, bytes.length); i++) {
+        bytes[i] = flags[i];
+    }
+    return Buffer.from(bytes.buffer);
 }
