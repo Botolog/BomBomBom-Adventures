@@ -12,11 +12,28 @@ import {
   ctx,
   reconnectInterval,
   wsUrl,
-  drawBoxs,
-    
+  Me,
+  clear,
+  show, 
+  Render,
+  draw, 
+  Screen,
+  TORENDER
 
 } from "./defs.js"
 
+
+export let renderDistance = 70
+let renderRequestOptions = new ArrayBuffer(3)
+let view = new DataView(renderRequestOptions)
+view.setUint8(0, true)
+
+view.setUint16(1, 100, true)
+// view.setUint16(1, Math.sqrt(Screen[0]**2+Screen[1]**2), true)
+renderRequestOptions = new Uint8Array(renderRequestOptions)
+
+export const ME = new Me()
+let boxs = []
 
 export let socket;
 export function connectWebSocket() {
@@ -36,14 +53,16 @@ export function connectWebSocket() {
             console.log('Connected to WebSocket server!');
             // You can now send messages, for example:
             sendDataToServer(addCode(DC.SET_UID, str2uint('Botolog')));
+            sendDataToServer(addCode(DC.GET_ENV, renderRequestOptions))
             // You could also set up a recurring ping here
-            // setInterval(() => {
-            //   pos[0]+=1
-            //   sendDataToServer(addCode(1, pos))
-            //   if (pos[0]%100==0){
-            //     console.log(pos)
-            //   }
-            // }, 100);
+            setInterval(() => {
+              sendDataToServer(addCode(DC.GET_ENV, renderRequestOptions))
+            }, 500);
+
+            setInterval(() => {
+              clear();
+              show();
+            }, 20);
         };
 
         // Event listener for incoming messages from the server
@@ -55,9 +74,19 @@ export function connectWebSocket() {
 
             // console.warn(`DEBUG ${code}: `, codeView);
             if (code === DC.SET_ENV) {
-                const boxs = boxsFromBuff(content)
-                drawBoxs(boxs);
+                boxsFromBuff(content)
+                
+                
+                // drawBoxs(boxs, '#ff0000ff');
+                // show();
                 return
+            }
+            if (code === DC.SET_ME) {
+              ME.fromByte(content)
+              // ME.toRender()
+              // drawBoxs([ME], "#AA00FFFF")
+              // show();
+              return 
             }
         };
 
@@ -82,6 +111,9 @@ export function connectWebSocket() {
 
 // Start the WebSocket connection process
 connectWebSocket();
+
+
+
 
 
 function keyInput(inputKeys) {

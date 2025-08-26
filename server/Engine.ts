@@ -7,7 +7,7 @@ import {
 } from "./index.js";
 
 import { Conn, Properties, Zvec } from "./utils.js";
-import { Vector2, DC, Direction, FLAG, Hitbox, min4, absMin, absMax, flagsToByte, INFO } from "../shared/defs.js";
+import { Vector2, DC, DIR, FLAG, Hitbox, min4, absMin, absMax, flagsToByte, INFO } from "../shared/defs.js";
 
 const Width: number = width;
 const Height: number = height;
@@ -30,9 +30,12 @@ export class Body {
     speedLim: number = 20;
     scripts: ((T: Body) => void)[] = [];
 
+    radius: number;
+
     constructor(manager: BodyManager, width: number = 0, height: number = 0) {
         this.size.x = width;
         this.size.y = height;
+        this.radius = Math.sqrt(width ** 2 + height ** 2)
         this.coordinates = new Vector2();
         this.velocity = new Vector2();
         this.gravity = new Vector2();
@@ -58,6 +61,7 @@ export class Body {
 
 
     collide(another: Body): boolean {
+        if (!this.inRadiusOf(another)) return false;
         if (!this.hasHitbox || !another.hasHitbox) return false;
         const hitbox1 = this.hitbox();
         const hitbox2 = another.hitbox();
@@ -70,14 +74,14 @@ export class Body {
         );
     }
 
-    sideCollide(another: Body): Direction {
-        if (!this.hasHitbox || !another.hasHitbox) return Direction.NONE;
+    sideCollide(another: Body): DIR {
+        if (!this.hasHitbox || !another.hasHitbox) return DIR.NONE;
         const a = this.hitbox();
         const b = another.hitbox();
 
         // First, check if the hitboxes intersect at all.
         if (a.x2 < b.x1 || a.x1 > b.x2 || a.y2 < b.y1 || a.y1 > b.y2) {
-            return Direction.NONE;
+            return DIR.NONE;
         }
 
         // Calculate penetration depths in all directions:
@@ -97,31 +101,31 @@ export class Body {
         );
 
         if (minPenetration === penetrationLeft) {
-            return Direction.LEFT;
+            return DIR.LEFT;
         } else if (minPenetration === penetrationRight) {
-            return Direction.RIGHT;
+            return DIR.RIGHT;
         } else if (minPenetration === penetrationTop) {
-            return Direction.DOWN;
+            return DIR.DOWN;
         } else {
-            return Direction.UP;
+            return DIR.UP;
         }
     }
 
     addFlag(flag: FLAG): void {
-        if (flag in this.flags) return;
+        if (this.flags.includes(flag)) return;
         this.flags.push(flag);
     }
 
     addFlags(flags: FLAG[]): void {
         for (let i = 0; i < flags.length; i++) {
-            if (flags[i] in this.flags) return;
+            if (this.flags.includes(flags[i])) return;
             this.flags.push(flags[i]);
         }
     }
 
     hasFlag(flag: FLAG): boolean {
         if (flag == FLAG.ANY) return true;
-        return flag in this.flags;
+        return this.flags.includes(flag);
     }
 
     calcFriction(): Vector2 {
@@ -156,19 +160,19 @@ export class Body {
         for (let i = 0; i < colds.length; i++) {
             const col = colds[i]
             const side = this.sideCollide(col)
-            if (side == Direction.DOWN || side == Direction.UP) this.velocity.y *= 0.01;
-            if (side == Direction.LEFT || side == Direction.RIGHT) this.velocity.x *= 0.01;
+            if (side == DIR.DOWN || side == DIR.UP) this.velocity.y *= 0.01;
+            if (side == DIR.LEFT || side == DIR.RIGHT) this.velocity.x *= 0.01;
             switch (side) {
-                case Direction.UP:
+                case DIR.UP:
                     this.coordinates.y = col.coordinates.y - this.size.y
                     break;
-                case Direction.DOWN:
+                case DIR.DOWN:
                     this.coordinates.y = col.coordinates.y + col.size.y
                     break;
-                case Direction.LEFT:
+                case DIR.LEFT:
                     this.coordinates.x = col.coordinates.x + col.size.x
                     break;
-                case Direction.RIGHT:
+                case DIR.RIGHT:
                     this.coordinates.x = col.coordinates.x - this.size.x
                     break;
 
@@ -215,6 +219,35 @@ export class Body {
         this.coordinates.addV(vector);
     }
 
+    distance(another: Body) {
+        const dx = Math.max(0, this.coordinates.x - (another.coordinates.x + another.size.x), another.coordinates.x - (this.coordinates.x + this.size.x));
+        const dy = Math.max(0, this.coordinates.y - (another.coordinates.y + another.size.y), another.coordinates.y - (this.coordinates.y + this.size.y));
+        return Math.hypot(dx, dy);
+    }
+
+    inRadiusOf(another: Body, log: boolean = false) {
+        // Calculate the difference in x and y coordinates.
+        const dx: number = 0.5 * (another.coordinates.x + another.size.x) - 0.5 * (this.coordinates.x + this.size.x);
+        const dy: number = 0.5 * (another.coordinates.y + another.size.y) - 0.5 * (this.coordinates.y + this.size.y);
+
+        // Calculate the squared distance between the circle centers.
+        const distanceSquared: number = dx * dx + dy * dy;
+
+        // Calculate the sum of the radii.
+        const radiiSum: number = this.radius + another.radius;
+
+        // Compare the squared distance with the squared sum of the radii.
+        // This is more efficient than calculating the square root of the distance.
+        const radiiSumSquared: number = radiiSum * radiiSum;
+        if (log){
+            console.log(dx, dy, distanceSquared, radiiSumSquared);
+            
+        }
+
+        return distanceSquared <= radiiSumSquared;
+
+    }
+
     destroy(): void {
         let index = this.manager.bodies.indexOf(this)
         this.manager.bodies.splice(index, 1)
@@ -226,7 +259,7 @@ export class Body {
         const flags = flagsToByte(this.flags);
         const total = [flags, pos, size];
         // console.warn(total);
-        
+
         return Buffer.concat(total, 16 + INFO.FLAGBUFFLEN)
     }
 }
@@ -342,12 +375,12 @@ export class Player extends Entity {
             this.destroy()
         })
 
-        conn.initCommand(DC.SET_VEL, (c) => {
-            this.body.coordinates.x = c.readFloatLE(0); this.body.coordinates.y = c.readFloatLE(4);
-        })
+        // conn.initCommand(DC.SET_VEL, (c) => {
+        //     this.body.coordinates.x = c.readFloatLE(0); this.body.coordinates.y = c.readFloatLE(4);
+        // })
 
-        conn.initCommand(DC.GET_POS, (c) => {
-            this.conn.sendData(DC.SET_POS, this.body.coordinates.toByte())
+        conn.initCommand(DC.GET_ME, (c) => {
+            this.conn.sendData(DC.SET_ME, this.toByte())
         })
 
         conn.initCommand(DC.SET_KEY, (c) => {
@@ -355,31 +388,42 @@ export class Player extends Entity {
             // add here the controll to current and after read current on tick
             this.conn.sendData(DC.DEBUG, this.currentControl.toByte())
         })
+
+        conn.initCommand(DC.GET_ENV, (c) => {
+            const withPlayers: boolean = c.readUint8(0) > 0
+            const renderDistance = c.readUint16LE(1);
+
+            this.conn.sendData(DC.SET_ENV, this.body.manager.toByte(this, withPlayers, renderDistance))
+        })
+
+
     }
 
     jump(): void {
-        const vj = this.properties.jumpK/2;
+        const vj = this.properties.jumpK / 2;
         const hj = 13;
         let colds = this.body.manager.sidesThatCollides(this.body, FLAG.ANY);
-        console.log(colds)
+
         if (colds.length > 0) {
-            if (Direction.UP in colds) return;
-            if (Direction.RIGHT in colds) {
+            if (colds.includes(DIR.UP)) { return; }
+            if (colds.includes(DIR.DOWN)) {
+                this.body.coordinates.y += 3;
+                this.body.velocity.y = this.properties.jumpK;
+                return;
+            }
+            if (colds.includes(DIR.RIGHT)) {
                 this.body.coordinates.x -= 3;
                 this.body.velocity.y = vj;
                 this.body.velocity.x = -hj;
                 this.facingRight = false;
             }
-            if (Direction.LEFT in colds) {
+            if (colds.includes(DIR.LEFT)) {
                 this.body.coordinates.x += 3;
                 this.body.velocity.y = vj;
                 this.body.velocity.x = hj;
                 this.facingRight = true;
             }
-            if (Direction.DOWN in colds) {
-                this.body.coordinates.y += 3;
-                this.body.velocity.y = this.properties.jumpK;
-            }
+
         }
     }
 
@@ -393,13 +437,22 @@ export class Player extends Entity {
     update(dt: number): void {
         this.control(this.currentControl.clone());
         super.update(dt);
-        
+
     }
 
     destroy(): void {
         super.destroy()
         let index = SCENEMANAGER.players.indexOf(this)
         SCENEMANAGER.players.splice(index, 1)
+    }
+
+    toByte(): Buffer {
+        const body = this.body.toByte();
+        const props = this.properties.toByte();
+        const total = [body, props];
+        // console.warn(total);
+
+        return Buffer.concat(total, 16 + INFO.FLAGBUFFLEN + INFO.PROPSBUFFLEN)
     }
 
 }
@@ -473,9 +526,9 @@ export class BodyManager {
         return collidedBodies;
     }
 
-    sidesThatCollides(body: Body, flag: FLAG = FLAG.ANY): Direction[] {
+    sidesThatCollides(body: Body, flag: FLAG = FLAG.ANY): DIR[] {
         let colds = this.collidesWithSomething(body, flag);
-        let dirs: Direction[] = [];
+        let dirs: DIR[] = [];
         for (let i = 0; i < colds.length; i++) {
             dirs.push(body.sideCollide(colds[i]));
         }
@@ -488,16 +541,22 @@ export class BodyManager {
         }
     }
 
-    toByte(): Buffer {
+    toByte(me: Player, withPlayers: boolean, renderDistance: number): Buffer {
         let data: Buffer[] = [];
-        for (let i = 0; i < this.bodies.length; i++){
-            if (!this.bodies[i].hasFlag(FLAG.PLAYER)){
-                data.push(this.bodies[i].toByte())
-                
+        for (let i = 0; i < this.bodies.length; i++) {
+            if (this.bodies[i].distance(me.body) < renderDistance) {
+                // console.log(this.bodies[i].hasFlag(FLAG.PLAYER), this.bodies[i]);
+
+                if (withPlayers || !this.bodies[i].hasFlag(FLAG.PLAYER)) {
+                    if (this.bodies[i] != me.body) {
+                        data.push(this.bodies[i].toByte())
+                    }
+
+                }
             }
         }
         // console.log(data)
-        return Buffer.concat(data, data.length*(16+INFO.FLAGBUFFLEN))
+        return Buffer.concat(data, data.length * (16 + INFO.FLAGBUFFLEN))
     }
 
     // render(offset: Vector2): void {
@@ -531,9 +590,9 @@ export class EntityManager {
         return collidedEntities;
     }
 
-    sidesThatCollides(entitiy: Entity, flag: FLAG = FLAG.ANY): Direction[] {
+    sidesThatCollides(entitiy: Entity, flag: FLAG = FLAG.ANY): DIR[] {
         let colds = this.collidesWithSomething(entitiy, flag);
-        let dirs: Direction[] = [];
+        let dirs: DIR[] = [];
         for (let i = 0; i < colds.length; i++) {
             dirs.push(entitiy.body.sideCollide(colds[i].body));
         }

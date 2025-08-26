@@ -19,7 +19,7 @@ wss.on('connection', async ws => {
 
     let conn = new Conn(CM, ws)
     let p = SCENEMANAGER.newPlayer(conn)
-    console.warn(SCENEMANAGER.currentScene.bodyManager.bodies)
+    // console.warn(SCENEMANAGER.currentScene.bodyManager.bodies)
 
     
 
@@ -27,8 +27,9 @@ wss.on('connection', async ws => {
     const thisLoop = setInterval(() => {
         if (p.conn.ws && p.conn.ws.readyState != 0) {
             // SCENEMANAGER.update(100);
+            p.conn.sendData(DC.SET_ME, p.toByte())
             // p.conn.sendData(DC.SET_POS, p.body.coordinates.toByte())
-            p.conn.sendData(DC.SET_ENV, p.body.manager.toByte())
+            // p.conn.sendData(DC.SET_ENV, p.body.manager.toByte(p, 7000))
         }
         else {
             console.log("cleared");
@@ -47,7 +48,7 @@ setInterval(() => {
 
         // SCENEMANAGER.players[0].conn.sendData(4, new Vector2(69.2, -42).toByte())
     }
-}, 30);
+}, 17);
 
 
 

@@ -2,13 +2,14 @@ export enum DC {
     SET_UID = 0,
     SET_VEL = 1,
     GET_ENV = 2,
-    GET_POS = 3,
-    SET_POS = 4,
+    GET_ME = 3,
+    SET_ME = 4,
     SET_KEY = 5,
     SET_ENV = 6,
+    GET_PROP = 7,
+    SET_PROP = 8,
 
     DEBUG = 255
-
 }
 
 export enum KEY {
@@ -23,9 +24,10 @@ export enum KEY {
 export enum INFO {
     PORT = 8765,
     FLAGBUFFLEN = 4,
+    PROPSBUFFLEN = 1,
 }
 
-export enum Direction {
+export enum DIR {
     NONE = -1,
     LEFT = 0,
     RIGHT = 1,

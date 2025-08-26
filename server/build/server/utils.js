@@ -12,6 +12,7 @@ export class Properties {
         this.canWallJump = false;
         this.dashSpeed = 10;
         this.maxSpeed = 10;
+        this.renderDistance = 500;
         this.vecs = new Map([
             [KEY.LEFT, new Vector2(-1, 0)],
             [KEY.RIGHT, new Vector2(1, 0)],
@@ -31,6 +32,11 @@ export class Properties {
             totalV.addV(this.getVec(byte));
         });
         return totalV;
+    }
+    toByte() {
+        const bytes = new Uint8Array(1);
+        bytes[0] = this.hp;
+        return Buffer.from(bytes.buffer);
     }
 }
 export function addCode(code, data) {

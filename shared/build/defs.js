@@ -3,10 +3,12 @@ export var DC;
     DC[DC["SET_UID"] = 0] = "SET_UID";
     DC[DC["SET_VEL"] = 1] = "SET_VEL";
     DC[DC["GET_ENV"] = 2] = "GET_ENV";
-    DC[DC["GET_POS"] = 3] = "GET_POS";
-    DC[DC["SET_POS"] = 4] = "SET_POS";
+    DC[DC["GET_ME"] = 3] = "GET_ME";
+    DC[DC["SET_ME"] = 4] = "SET_ME";
     DC[DC["SET_KEY"] = 5] = "SET_KEY";
     DC[DC["SET_ENV"] = 6] = "SET_ENV";
+    DC[DC["GET_PROP"] = 7] = "GET_PROP";
+    DC[DC["SET_PROP"] = 8] = "SET_PROP";
     DC[DC["DEBUG"] = 255] = "DEBUG";
 })(DC || (DC = {}));
 export var KEY;
@@ -21,15 +23,16 @@ export var INFO;
 (function (INFO) {
     INFO[INFO["PORT"] = 8765] = "PORT";
     INFO[INFO["FLAGBUFFLEN"] = 4] = "FLAGBUFFLEN";
+    INFO[INFO["PROPSBUFFLEN"] = 1] = "PROPSBUFFLEN";
 })(INFO || (INFO = {}));
-export var Direction;
-(function (Direction) {
-    Direction[Direction["NONE"] = -1] = "NONE";
-    Direction[Direction["LEFT"] = 0] = "LEFT";
-    Direction[Direction["RIGHT"] = 1] = "RIGHT";
-    Direction[Direction["UP"] = 2] = "UP";
-    Direction[Direction["DOWN"] = 3] = "DOWN";
-})(Direction || (Direction = {}));
+export var DIR;
+(function (DIR) {
+    DIR[DIR["NONE"] = -1] = "NONE";
+    DIR[DIR["LEFT"] = 0] = "LEFT";
+    DIR[DIR["RIGHT"] = 1] = "RIGHT";
+    DIR[DIR["UP"] = 2] = "UP";
+    DIR[DIR["DOWN"] = 3] = "DOWN";
+})(DIR || (DIR = {}));
 export var FLAG;
 (function (FLAG) {
     FLAG[FLAG["ANY"] = 1] = "ANY";

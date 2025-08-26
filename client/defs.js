@@ -1,13 +1,15 @@
 import { DC, KEY, INFO } from "../shared/build/defs.js"
-import { socket } from "./index.js";
+import { socket, ME, connectWebSocket, renderDistance } from "./index.js";
 
-export const wsUrl = `ws://localhost:${INFO.PORT}`;
+export const wsUrl = `ws://10.0.0.13:${INFO.PORT}`;
 export let reconnectInterval = 3000; // 3 seconds
 
 
 export let canvas = document.getElementById("canvas");
 export const ctx = canvas.getContext('2d');
-
+export const Screen = [1600, 700]
+canvas.width = Screen[0];
+canvas.height = Screen[1];
 
 export class Box {
     constructor(x1, y1, x2, y2, flags) {
@@ -18,6 +20,50 @@ export class Box {
         this.flags = flags;
     }
 }
+
+// TODO:
+export class Me {
+    x1 = 0;
+    y1 = 0;
+    x2 = 0;
+    y2 = 0;
+    hp = 100;
+    flags = []
+
+    fromByte(data) {
+        const buffer = data;
+
+
+        const flags = new Uint8Array(buffer, 0, INFO.FLAGBUFFLEN);
+        const dots = new Float32Array(buffer, INFO.FLAGBUFFLEN, 4);
+        const props = new Uint8Array(buffer, INFO.FLAGBUFFLEN + 16, INFO.PROPSBUFFLEN);
+        this.x1 = dots[0]; this.y1 = dots[1]; this.x2 = dots[2]; this.y2 = dots[3]; this.hp = props[0];
+        this.flags = flags
+    }
+
+    toRender() {
+        const r = new Render()
+        r.x1=this.x1;
+        r.y1=this.y1;
+        r.x2=this.x2;
+        r.y2=this.y2;
+        r.color = "#ff2222ff"
+        // TORENDER.push(r)
+        return r;
+    }
+}
+
+export class Render {
+    type = "box";
+    x1 = 0;
+    y1 = 0;
+    x2 = 0;
+    y2 = 0;
+    color = "#FFFFFFFF"
+    size = 2;
+}
+
+export let TORENDER = []
 
 export function sendDataToServer(data) {
     if (socket && socket.readyState === 1) { // WebSocket.OPEN = 1
@@ -50,7 +96,10 @@ export function boxFromBuff(data) {
 
     const flags = new Uint8Array(buffer, byteOffset, INFO.FLAGBUFFLEN);
     const dots = new Float32Array(buffer, byteOffset + INFO.FLAGBUFFLEN, 4);
-    return new Box(dots[0], dots[1], dots[2], dots[3], flags)
+    const render = new Render()
+    render.x1 = dots[0]; render.y1 = dots[1]; render.x2 = dots[2]; render.y2 = dots[3];
+    render.color = "#FF0000FF"
+    return render;
 }
 
 const bytesPerBox = (INFO.FLAGBUFFLEN + 16)
@@ -58,11 +107,13 @@ export function boxsFromBuff(data) {
     // console.log(data);/
     const fullView = new Uint8Array(data);
     let boxs = [];
+    TORENDER = []
     for (let i = 0; i < data.byteLength / bytesPerBox; i++) {
         const currentByteOffset = i * bytesPerBox;
         const currentBoxData = fullView.subarray(currentByteOffset, currentByteOffset + bytesPerBox);
         const box = boxFromBuff(currentBoxData);
-        boxs.push(box);
+        // boxs.push(box);
+        TORENDER.push(box);
     }
     // console.log(data.length / bytesPerBox)
     return boxs;
@@ -111,24 +162,26 @@ export function areSetsEqual(setA, setB) {
 
 
 
-export function drawBoxs(boxs) {
-    // Clear the entire canvas before drawing.
+export function clear() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+}
 
-    // Set the drawing style.
-    ctx.strokeStyle = '#ff0000ff';
-    ctx.lineWidth = 1;
-
-    // Begin a new path. This is the key to batching.
-    ctx.beginPath();
-
-    // Iterate over the square data and add each rectangle to the current path.
-    for (const square of boxs) {
-        // `ctx.rect()` adds a rectangle to the current path without drawing it.
-        ctx.rect(square.x1, square.y1, square.x2, square.y2);
+export function draw(renderObject) {
+    const offX = ME.x1-Screen[0]/2; const offY = -Screen[1]/20;
+    ctx.strokeStyle = renderObject.color;
+    ctx.lineWidth = renderObject.size;
+    if (renderObject.type == "box") {
+        ctx.rect(renderObject.x1-offX, renderObject.y1-offY, renderObject.x2, renderObject.y2);
     }
+}
 
-    // Draw all the rectangles in the path with a single stroke() call.
+export function show() {
+    ctx.beginPath();
+    TORENDER.forEach(element => {
+        draw(element)
+    });
+    // TORENDER = []
+    draw(ME.toRender())
     ctx.stroke();
-    // console.log(boxs)
 }

@@ -15,6 +15,8 @@ export class Properties {
     dashSpeed: number = 10;
     maxSpeed: number = 10;
 
+    renderDistance: number = 500;
+
     vecs: Map<KEY, Vector2> = new Map<KEY, Vector2>([
         [KEY.LEFT, new Vector2(-1, 0)],
         [KEY.RIGHT, new Vector2(1, 0)],
@@ -35,6 +37,12 @@ export class Properties {
             totalV.addV(this.getVec(byte))
         })
         return totalV;
+    }
+
+    toByte(): Buffer {
+        const bytes = new Uint8Array(1);
+        bytes[0] = this.hp;
+        return Buffer.from(bytes.buffer);
     }
 }
 
