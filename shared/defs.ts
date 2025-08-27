@@ -8,6 +8,8 @@ export enum DC {
     SET_ENV = 6,
     GET_PROP = 7,
     SET_PROP = 8,
+    ADD_MSG = 9,
+    NEW_MSG = 10,
 
     DEBUG = 255
 }

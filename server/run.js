@@ -29,12 +29,12 @@ let x = 0;
 // }, 500)
 
 
-setInterval(() => {
-    console.log(
+// setInterval(() => {
+//     console.log(
 
-        SCENEMANAGER.players[0]?.jumpsLeft
-    );
-}, 200)
+//         SCENEMANAGER.players[0]?.jumpsLeft
+//     );
+// }, 200)
 
 
 // setInterval(()=>{

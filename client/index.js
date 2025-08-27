@@ -14,9 +14,9 @@ import {
   wsUrl,
   Me,
   clear,
-  show, 
+  show,
   Render,
-  draw, 
+  draw,
   Screen,
   TORENDER
 
@@ -37,78 +37,78 @@ let boxs = []
 
 export let socket;
 export function connectWebSocket() {
-    try {
-        console.log(`Attempting to connect to ${wsUrl}...`);
+  try {
+    console.log(`Attempting to connect to ${wsUrl}...`);
 
-        // Create a new WebSocket connection
-        // Note: When running this in Node.js, you would need a WebSocket client library
-        // like 'ws'. This code assumes a browser-like environment where WebSocket is global.
-        // For Node.js, you would instantiate a new 'WebSocket' object from the 'ws' library.
-        // Example for Node.js: const WebSocket = require('ws'); const socket = new WebSocket(wsUrl);
-        socket = new WebSocket(wsUrl);
-        socket.binaryType = "arraybuffer"
-        // socket.setTimeout
+    // Create a new WebSocket connection
+    // Note: When running this in Node.js, you would need a WebSocket client library
+    // like 'ws'. This code assumes a browser-like environment where WebSocket is global.
+    // For Node.js, you would instantiate a new 'WebSocket' object from the 'ws' library.
+    // Example for Node.js: const WebSocket = require('ws'); const socket = new WebSocket(wsUrl);
+    socket = new WebSocket(wsUrl);
+    socket.binaryType = "arraybuffer"
+    // socket.setTimeout
 
 
-        // Event listener for a successful connection
-        socket.onopen = () => {
-            console.log('Connected to WebSocket server!');
-            // You can now send messages, for example:
-            sendDataToServer(addCode(DC.SET_UID, str2uint('Botolog')));
-            sendDataToServer(addCode(DC.GET_ENV, renderRequestOptions))
-            // You could also set up a recurring ping here
-            setInterval(() => {
-              sendDataToServer(addCode(DC.GET_ENV, renderRequestOptions))
-            }, 500);
+    // Event listener for a successful connection
+    socket.onopen = () => {
+      console.log('Connected to WebSocket server!');
+      // You can now send messages, for example:
+      sendDataToServer(addCode(DC.SET_UID, str2uint('Botolog')));
+      sendDataToServer(addCode(DC.GET_ENV, renderRequestOptions))
+      // You could also set up a recurring ping here
+      setInterval(() => {
+        sendDataToServer(addCode(DC.GET_ENV, renderRequestOptions))
+      }, 500);
 
-            setInterval(() => {
-              clear();
-              show();
-            }, 20);
-        };
+      setInterval(() => {
+        clear();
+        show();
+      }, 20);
+    };
 
-        // Event listener for incoming messages from the server
-        socket.onmessage = event => {
-            const data = event.data;
-            const codeView = new Uint8Array(data);
-            const code = codeView[0];
-            const content = data.slice(1);
+    // Event listener for incoming messages from the server
+    socket.onmessage = event => {
+      const data = event.data;
+      const codeView = new Uint8Array(data);
+      const code = codeView[0];
+      const content = data.slice(1);
 
-            // console.warn(`DEBUG ${code}: `, codeView);
-            if (code === DC.SET_ENV) {
-                boxsFromBuff(content)
-                
-                
-                // drawBoxs(boxs, '#ff0000ff');
-                // show();
-                return
-            }
-            if (code === DC.SET_ME) {
-              ME.fromByte(content)
-              // ME.toRender()
-              // drawBoxs([ME], "#AA00FFFF")
-              // show();
-              return 
-            }
-        };
+      // console.warn(`DEBUG ${code}: `, codeView);
+      if (code === DC.SET_ENV) {
+        boxsFromBuff(content)
 
-        // Event listener for when the connection is closed
-        socket.onclose = () => {
-            console.log('Disconnected from WebSocket server. Reconnecting...');
-            // Attempt to reconnect after a short delay
-            setTimeout(connectWebSocket, reconnectInterval);
-        };
 
-        // Event listener for any errors that occur
-        socket.onerror = error => {
-            console.error('WebSocket Error:', error);
-        };
+        // drawBoxs(boxs, '#ff0000ff');
+        // show();
+        return
+      }
+      if (code === DC.SET_ME) {
+        ME.fromByte(content)
+        // ME.toRender()
+        // drawBoxs([ME], "#AA00FFFF")
+        // show();
+        return
+      }
+    };
 
-    } catch (e) {
-        console.error("WebSocket connection failed:", e);
-        console.log(`Retrying connection in ${reconnectInterval / 1000} seconds...`);
-        setTimeout(connectWebSocket, reconnectInterval);
-    }
+    // Event listener for when the connection is closed
+    socket.onclose = () => {
+      console.log('Disconnected from WebSocket server. Reconnecting...');
+      // Attempt to reconnect after a short delay
+      setTimeout(connectWebSocket, reconnectInterval);
+    };
+
+    // Event listener for any errors that occur
+    socket.onerror = error => {
+      console.error('WebSocket Error:', error);
+    };
+
+  } catch (e) {
+    console.error("WebSocket connection failed:", e);
+    console.log(`Retrying connection in ${reconnectInterval / 1000} seconds...`);
+    setTimeout(connectWebSocket, reconnectInterval);
+  }
 }
 
 // Start the WebSocket connection process
@@ -142,6 +142,39 @@ function keyInput(inputKeys) {
   return new Uint8Array(toSend)
 }
 
+
+
+let ChatIsOpen = false
+export const chat = document.getElementById("chat")
+export const chatin = document.getElementById("chatin")
+chatin.value = ""
+export function openChat() {
+  console.log(ChatIsOpen);
+
+  if (ChatIsOpen) return;
+  chat.style.display = "block";
+  chatin.focus();
+  ChatIsOpen = true;
+}
+
+export function closeChat() {
+  if (!ChatIsOpen) return;
+  chat.style.display = "none";
+  chatin.value = ""
+  canvas.focus();
+  ChatIsOpen = false;
+}
+
+chat.onkeydown = event => {
+  if (event.key == "Escape") closeChat()
+  if (event.key == "Enter") {
+    sendDataToServer(addCode(DC.ADD_MSG))
+    closeChat()
+  }
+
+}
+
+
 let lastState = new Set()
 function sendKeys(keys) {
   const data = keyInput(keys);
@@ -150,19 +183,20 @@ function sendKeys(keys) {
     lastState = new Set(keys)
   }
 }
-
-
 const keysPressed = new Set();
 // keysPressed.
 let s = 50;
 document.addEventListener("keydown", (e) => {
+  if (ChatIsOpen) return;
   keysPressed.add(e.key);
   if (e.key == "-") scaleScreen((--s) / 100);
   if (e.key == "=") scaleScreen((++s) / 100);
+  if (e.key == "`") openChat()
   sendKeys(keysPressed)
 });
 
 document.addEventListener("keyup", (e) => {
+  if (ChatIsOpen) return;
   keysPressed.delete(e.key);
   sendKeys(keysPressed)
 });

@@ -47,7 +47,7 @@ export class Properties {
 }
 
 
-export type messageFunc = (content: Buffer) => void;
+export type commandFunc = (content: Buffer) => void;
 
 export function addCode(code: DC, data: Buffer): ArrayBuffer{
     const buff = data
@@ -64,7 +64,7 @@ export class Conn {
     ws: any;
     uid: string = "=";
     manager: ConnManager;
-    commands: messageFunc[] = Array.from({ length: 256 }, () => () => {});
+    commands: commandFunc[] = Array.from({ length: 256 }, () => () => {});
     constructor(CM: ConnManager, ws: any, uid: string = "=") {
         this.manager = CM;
         this.ws = ws;
@@ -89,6 +89,7 @@ export class Conn {
 
         this.initCommand(DC.SET_UID, (c: Buffer) => { this.uid = String.fromCharCode(...c); })
 
+        // this.initCommand(DC.ADD_MSG, (c: Buffer) => { E.SCENEMANAGER.players.forEach(player=>player.conn.sendData(DC.NEW_MSG, c))})
         // this.initCommand(DC.DEBUG, (c) => {console.warn("DEBUG: ", c);})
 
         this.ws.on("message", async (bytes: any) => {
@@ -101,7 +102,7 @@ export class Conn {
         })
     }
 
-    initCommand(Rcode: DC, command: messageFunc): void {
+    initCommand(Rcode: DC, command: commandFunc): void {
         this.commands[Rcode] = command;
     }
 

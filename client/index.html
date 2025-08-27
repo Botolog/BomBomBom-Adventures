@@ -6,10 +6,19 @@
       margin: 0;
       overflow: hidden;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
       background-color: rgb(27, 0, 0);
+    }
+    #chatin {
+      width: 94vw;
+      font-size: larger;
+      border-radius: 0;
+      border: 0;
+      
+      /* position: absolute; */
     }
   </style>
   <link rel="stylesheet" href="styles/crt.css" media="all" />
@@ -29,6 +38,10 @@
     "
   >
   </canvas>
+
+  <chat id="chat" style="display: none;">
+    <input id="chatin" >
+  </chat>
 
   <!-- implement the wasm -->
   <!-- <script type="module" src="./build/release.js"></script> -->
