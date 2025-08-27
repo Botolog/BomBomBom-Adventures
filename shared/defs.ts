@@ -10,6 +10,8 @@ export enum DC {
     SET_PROP = 8,
     ADD_MSG = 9,
     NEW_MSG = 10,
+    GET_ENT = 11,
+    SET_ENT = 12,
 
     DEBUG = 255
 }
@@ -27,6 +29,8 @@ export enum INFO {
     PORT = 8765,
     FLAGBUFFLEN = 4,
     PROPSBUFFLEN = 1,
+    PLAYERBUFFLEN = FLAGBUFFLEN+PROPSBUFFLEN+16,
+    
 }
 
 export enum DIR {

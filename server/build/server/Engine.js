@@ -235,6 +235,16 @@ export class Player extends Entity {
             const renderDistance = c.readUint16LE(1);
             this.conn.sendData(DC.SET_ENV, this.body.manager.toByte(this, withPlayers, renderDistance));
         });
+        conn.initCommand(DC.GET_ENT, (c) => {
+            const playersByte = [];
+            SCENEMANAGER.players.forEach(player => {
+                if (player != this) {
+                    playersByte.push(player.toByte());
+                }
+            });
+            if (playersByte.length > 0)
+                conn.sendData(DC.SET_ENT, Buffer.concat(playersByte, playersByte.length * playersByte[0].byteLength));
+        });
     }
     jump(holdJump = false) {
         const vj = this.properties.jumpK / 2;

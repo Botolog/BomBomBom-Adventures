@@ -31,6 +31,12 @@ export class Me {
     hp = 100;
     flags = []
 
+    constructor(data=undefined){
+        if (data){
+            this.fromByte(data);
+        }
+    }
+    
     fromByte(data) {
         const buffer = data;
 

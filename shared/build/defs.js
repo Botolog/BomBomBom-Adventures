@@ -11,6 +11,8 @@ export var DC;
     DC[DC["SET_PROP"] = 8] = "SET_PROP";
     DC[DC["ADD_MSG"] = 9] = "ADD_MSG";
     DC[DC["NEW_MSG"] = 10] = "NEW_MSG";
+    DC[DC["GET_ENT"] = 11] = "GET_ENT";
+    DC[DC["SET_ENT"] = 12] = "SET_ENT";
     DC[DC["DEBUG"] = 255] = "DEBUG";
 })(DC || (DC = {}));
 export var KEY;
@@ -26,6 +28,7 @@ export var INFO;
     INFO[INFO["PORT"] = 8765] = "PORT";
     INFO[INFO["FLAGBUFFLEN"] = 4] = "FLAGBUFFLEN";
     INFO[INFO["PROPSBUFFLEN"] = 1] = "PROPSBUFFLEN";
+    INFO[INFO["PLAYERBUFFLEN"] = 21] = "PLAYERBUFFLEN";
 })(INFO || (INFO = {}));
 export var DIR;
 (function (DIR) {

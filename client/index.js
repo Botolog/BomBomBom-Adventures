@@ -12,7 +12,7 @@ import {
   ctx,
   reconnectInterval,
   wsUrl,
-  Me,
+  Me as Player,
   clear,
   show,
   Render,
@@ -32,7 +32,7 @@ view.setUint16(1, 500, true)
 // view.setUint16(1, Math.sqrt(Screen[0]**2+Screen[1]**2), true)
 renderRequestOptions = new Uint8Array(renderRequestOptions)
 
-export const ME = new Me()
+export const ME = new Player()
 let boxs = []
 
 export let socket;
@@ -59,7 +59,11 @@ export function connectWebSocket() {
       // You could also set up a recurring ping here
       setInterval(() => {
         sendDataToServer(addCode(DC.GET_ENV, renderRequestOptions))
-      }, 500);
+      }, 30);
+
+      // setInterval(() => {
+      //   sendDataToServer(addCode(DC.GET_ENT, str2uint("s")))
+      // }, 50);
 
       setInterval(() => {
         clear();
@@ -85,6 +89,18 @@ export function connectWebSocket() {
       }
       if (code === DC.SET_ME) {
         ME.fromByte(content)
+        // ME.toRender()
+        // drawBoxs([ME], "#AA00FFFF")
+        // show();
+        return
+      }
+      if (code === DC.SET_ENT) {
+        let p;
+        for (let i=0; i<content/INFO.PLAYERBUFFLEN; i+=INFO.PLAYERBUFFLEN){
+          p = new Player(content.slice(i, i+INFO.PLAYERBUFFLEN))
+          console.log(p)
+        }
+
         // ME.toRender()
         // drawBoxs([ME], "#AA00FFFF")
         // show();

@@ -403,6 +403,16 @@ export class Player extends Entity {
             this.conn.sendData(DC.SET_ENV, this.body.manager.toByte(this, withPlayers, renderDistance))
         })
 
+        conn.initCommand(DC.GET_ENT, (c)=>{
+            const playersByte = [];
+            SCENEMANAGER.players.forEach(player=>{
+                if (player != this) {
+                    playersByte.push(player.toByte());
+                }
+            })
+            if (playersByte.length > 0)
+                conn.sendData(DC.SET_ENT, Buffer.concat(playersByte, playersByte.length*playersByte[0].byteLength))
+        })
 
     }
 
@@ -704,10 +714,6 @@ export class SceneManager {
     players: Player[] = [];
     noScene: Scene = new Scene(-1);
     currentScene: Scene = this.noScene;
-
-    constructor() {
-        // this.currentScene = this.noScene;
-    }
 
     findScene(ID: number): Scene {
         for (let i = 0; i < this.scenes.length; i++) {
