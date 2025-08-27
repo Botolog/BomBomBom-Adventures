@@ -12,9 +12,7 @@ lvl.newObs(500, 0, 10, 200)
 lvl.newObs(100, 60, 10, 200)
 lvl.newObs(300, 0, 10, 200).staticObj = false
 
-for (let i = 0; i < 100; i++) {
-    lvl.newObs(400 + (105) + 100 / i, 25 + i, 100, 200)
-}
+
 
 
 const flor = lvl.newObs(15, 35, 20, 20)

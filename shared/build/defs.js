@@ -9,6 +9,8 @@ export var DC;
     DC[DC["SET_ENV"] = 6] = "SET_ENV";
     DC[DC["GET_PROP"] = 7] = "GET_PROP";
     DC[DC["SET_PROP"] = 8] = "SET_PROP";
+    DC[DC["ADD_MSG"] = 9] = "ADD_MSG";
+    DC[DC["NEW_MSG"] = 10] = "NEW_MSG";
     DC[DC["DEBUG"] = 255] = "DEBUG";
 })(DC || (DC = {}));
 export var KEY;

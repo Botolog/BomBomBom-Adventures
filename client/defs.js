@@ -1,8 +1,8 @@
 import { DC, KEY, INFO } from "../shared/build/defs.js"
 import { socket, ME, connectWebSocket, renderDistance } from "./index.js";
 
-// export const wsUrl = `ws://server3bom.botolog.xyz`;
-export const wsUrl = `ws://10.0.0.13:${INFO.PORT}`;
+export const wsUrl = `wss://server3bom.botolog.xyz`;
+// export const wsUrl = `wss://10.0.0.13:${INFO.PORT}`;
 export let reconnectInterval = 3000; // 3 seconds
 
 
