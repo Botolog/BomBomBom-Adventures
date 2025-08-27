@@ -8,8 +8,8 @@ export class Properties {
         this.meleeDamage = 10;
         this.meleeRange = 50;
         this.specialDamage = 20;
-        this.canDoubleJump = false;
-        this.canWallJump = false;
+        this.additionalJumps = 1;
+        this.canWallJump = true;
         this.dashSpeed = 10;
         this.maxSpeed = 10;
         this.renderDistance = 500;
@@ -43,7 +43,7 @@ export function addCode(code, data) {
     const buff = data;
     const newBuff = new ArrayBuffer(buff.byteLength + 1);
     const newView = new Uint8Array(newBuff);
-    newView[0] = code; // Set the new first byte
+    newView[0] = code;
     newView.set(new Uint8Array(buff), 1);
     return newBuff;
 }
@@ -57,11 +57,6 @@ export class Conn {
             this.uid = uid;
         }
         else {
-            // throw new Error("No id in player");
-            // ws.once("message", msg => {
-            //     this.uid = msg;
-            //     console.log(`UID is now ${this.uid}`)
-            // })
         }
         ws.once("close", (e) => {
             console.error("diconnected");
@@ -69,13 +64,10 @@ export class Conn {
         });
         this.manager.addConn(this);
         this.initCommand(DC.SET_UID, (c) => { this.uid = String.fromCharCode(...c); });
-        // this.initCommand(DC.DEBUG, (c) => {console.warn("DEBUG: ", c);})
         this.ws.on("message", async (bytes) => {
-            // const msg = bytes.readFloatLE(0)
             const msg = bytes;
             const code = msg[0];
             const content = msg.slice(1);
-            // console.log(msg)
             this.commands[code](content);
         });
     }
@@ -98,26 +90,3 @@ export class ConnManager {
         this.connections.push(conn);
     }
 }
-// export async function createConn(CM: any, ws: any, initialUid: string = "="): Promise<Conn> {
-//     let resolvedUid: string;
-//     if (initialUid !== "=") {
-//         resolvedUid = initialUid;
-//     } else {
-//         console.log("Waiting for UID message from client...");
-//         // Use a Promise to wait for the "message" event to fire just once.
-//         resolvedUid = await new Promise<string>((resolve, reject) => {
-//             ws.once("message", msg => {
-//                 // Assuming the message is the UID string itself.
-//                 resolve(msg.toString());
-//             });
-//             // Optional: You might want to handle an error or timeout here.
-//             ws.once("close", () => {
-//                 reject(new Error("Connection closed before UID was received."));
-//             });
-//         });
-//         console.log(`UID received: ${resolvedUid}`);
-//     }
-//     // Now that the UID is resolved, we can safely create the new instance.
-//     const newConn = new Conn(CM, ws, resolvedUid);
-//     return newConn;
-// }

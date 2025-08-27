@@ -2,11 +2,13 @@
   "include": [
     "./**/*.ts"
   ],
+
+  "buildOptions": {"incremental": true},
   
   "compilerOptions": {
     "target": "es2020",
     "module": "nodenext",
-
+    "removeComments": true,
     "importHelpers": true,
     "outDir": "./build",
     "moduleResolution": "nodenext"

@@ -28,7 +28,7 @@ let renderRequestOptions = new ArrayBuffer(3)
 let view = new DataView(renderRequestOptions)
 view.setUint8(0, true)
 
-view.setUint16(1, 100, true)
+view.setUint16(1, 500, true)
 // view.setUint16(1, Math.sqrt(Screen[0]**2+Screen[1]**2), true)
 renderRequestOptions = new Uint8Array(renderRequestOptions)
 
@@ -47,6 +47,8 @@ export function connectWebSocket() {
         // Example for Node.js: const WebSocket = require('ws'); const socket = new WebSocket(wsUrl);
         socket = new WebSocket(wsUrl);
         socket.binaryType = "arraybuffer"
+        // socket.setTimeout
+
 
         // Event listener for a successful connection
         socket.onopen = () => {

@@ -1,14 +1,10 @@
-import { 
-// CAMERA,
-width, height, } from "./index.js";
+import { width, height, } from "./index.js";
 import { Properties, Zvec } from "./utils.js";
 import { Vector2, DC, DIR, FLAG, min4, flagsToByte, INFO } from "../shared/defs.js";
 const Width = width;
 const Height = height;
 export class Body {
     constructor(manager, width = 0, height = 0) {
-        // width: number;
-        // height: number;
         this.size = new Vector2();
         this.friction = new Vector2(1, 1);
         this.staticObj = false;
@@ -17,6 +13,7 @@ export class Body {
         this.toRender = true;
         this.speedLim = 20;
         this.scripts = [];
+        this.currentTickColl = undefined;
         this.size.x = width;
         this.size.y = height;
         this.radius = Math.sqrt(width ** 2 + height ** 2);
@@ -56,18 +53,13 @@ export class Body {
             return DIR.NONE;
         const a = this.hitbox();
         const b = another.hitbox();
-        // First, check if the hitboxes intersect at all.
         if (a.x2 < b.x1 || a.x1 > b.x2 || a.y2 < b.y1 || a.y1 > b.y2) {
             return DIR.NONE;
         }
-        // Calculate penetration depths in all directions:
-        // How far is 'this' penetrating into 'another' from each side?
-        const penetrationLeft = b.x2 - a.x1; // collision from left
-        const penetrationRight = a.x2 - b.x1; // collision from right
-        const penetrationTop = b.y2 - a.y1; // collision from top
-        const penetrationBottom = a.y2 - b.y1; // collision from bottom
-        // Determine which penetration is the smallest.
-        // That will be the primary collision direction.
+        const penetrationLeft = b.x2 - a.x1;
+        const penetrationRight = a.x2 - b.x1;
+        const penetrationTop = b.y2 - a.y1;
+        const penetrationBottom = a.y2 - b.y1;
         const minPenetration = min4(penetrationLeft, penetrationRight, penetrationTop, penetrationBottom);
         if (minPenetration === penetrationLeft) {
             return DIR.LEFT;
@@ -100,7 +92,7 @@ export class Body {
         return this.flags.includes(flag);
     }
     calcFriction() {
-        let colds = this.manager.collidesWithSomething(this);
+        let colds = this.manager.collidesWithSomeFlag(this);
         let mod = new Vector2(1, 1);
         for (let i = 0; i < colds.length; i++) {
             mod.multiplyV(colds[i].friction);
@@ -117,9 +109,9 @@ export class Body {
             return;
         this.velocity.addV(this.gravity.CmultiplyS(dt));
         this.velocity.multiplyV(this.drag.CmultiplyV(this.calcFriction()));
-        // this.velocity.x = absMin(this.velocity.x, this.speedLim)
         this.coordinates.addV(this.velocity.CmultiplyS(dt).absMin(this.speedLim));
-        let colds = this.manager.collidesWithSomething(this, FLAG.ANY);
+        this.currentTickColl = undefined;
+        let colds = this.manager.collidesWithSomeFlag(this, FLAG.ANY);
         for (let i = 0; i < colds.length; i++) {
             const col = colds[i];
             const side = this.sideCollide(col);
@@ -145,36 +137,6 @@ export class Body {
             }
         }
     }
-    // inScreen(): boolean{
-    //     let scaleK = this.manager.scene.ctxScale
-    //     let cam = this.manager.scene.camera
-    //     let s = new Vector2(cam.canvas.width, cam.canvas.height) 
-    //     s.multiplyS(scaleK)
-    //     let h = this.hitbox()
-    //     return !(
-    //     // TODO chek if obj in screen to render
-    // }
-    // render(offset: Vector2): void {
-    //     if (!this.toRender) {
-    //         return;
-    //     }
-    //     // this.canvas.ctx.fillRect(
-    //     //     this.body.coordinates.x - offset.x,
-    //     //     this.body.coordinates.y - offset.y,
-    //     //     1,
-    //     //     1,
-    //     //     red
-    //     // );
-    //     if (DRAW_HITBOXES) {
-    //         this.manager.scene.camera.canvas.ctx.drawRect(
-    //             this.coordinates.x - offset.x,
-    //             this.coordinates.y - offset.y,
-    //             this.size.x,
-    //             this.size.y,
-    //             iColor(255, 0, 0)
-    //         );
-    //     }
-    // }
     move(vector) {
         this.coordinates.addV(vector);
     }
@@ -184,15 +146,10 @@ export class Body {
         return Math.hypot(dx, dy);
     }
     inRadiusOf(another, log = false) {
-        // Calculate the difference in x and y coordinates.
-        const dx = 0.5 * (another.coordinates.x + another.size.x) - 0.5 * (this.coordinates.x + this.size.x);
-        const dy = 0.5 * (another.coordinates.y + another.size.y) - 0.5 * (this.coordinates.y + this.size.y);
-        // Calculate the squared distance between the circle centers.
+        const dx = (another.coordinates.x + (another.size.x * 0.5)) - (this.coordinates.x + (this.size.x * 0.5));
+        const dy = (another.coordinates.y + (another.size.y * 0.5)) - (this.coordinates.y + (this.size.y * 0.5));
         const distanceSquared = dx * dx + dy * dy;
-        // Calculate the sum of the radii.
         const radiiSum = this.radius + another.radius;
-        // Compare the squared distance with the squared sum of the radii.
-        // This is more efficient than calculating the square root of the distance.
         const radiiSumSquared = radiiSum * radiiSum;
         if (log) {
             console.log(dx, dy, distanceSquared, radiiSumSquared);
@@ -208,7 +165,6 @@ export class Body {
         const size = this.size.toByte();
         const flags = flagsToByte(this.flags);
         const total = [flags, pos, size];
-        // console.warn(total);
         return Buffer.concat(total, 16 + INFO.FLAGBUFFLEN);
     }
 }
@@ -217,7 +173,6 @@ export class Entity {
         this.toRender = true;
         this.staticObj = false;
         this.scripts = [];
-        // this.canvas = CANVAS;
         this.body = new Body(Bmanager, 0, 0);
         this.manager = Emanager;
         this.flags = [];
@@ -237,20 +192,12 @@ export class Entity {
     }
     addFlag(flag) {
         return this.body.addFlag(flag);
-        // if (flag in this.flags) return;
-        // this.flags.push(flag);
     }
     addFlags(flags) {
         return this.body.addFlags(flags);
-        // for (let i = 0; i < flags.length; i++) {
-        //     if (flags[i] in this.flags) return;
-        //     this.flags.push(flags[i]);
-        // }
     }
     hasFlag(flag) {
         return this.body.hasFlag(flag);
-        // if (flag == FLAG.ANY) return true;
-        // return flag in this.flags;
     }
     destroy() {
         this.body.destroy();
@@ -263,29 +210,24 @@ export class Player extends Entity {
         super(entityManager, bodyManager);
         this.properties = new Properties();
         this.currentControl = Zvec.clone();
-        // this.mAttackB = new Body(bodyManager, 0, 0);
-        // this.mAttackB.staticObj = true;
         this.body.size.x = 20;
         this.body.size.y = 20;
         this.body.gravity.set(new Vector2(0, -0.25));
-        // this.body.velocity.y = -10;
-        this.body.drag = new Vector2(0.9, 0.99);
+        this.body.drag = new Vector2(0.92, 0.99);
         this.body.coordinates.y = 50;
         this.body.speedLim = 10;
         this.body.addFlag(FLAG.PLAYER);
         this.conn = conn;
+        this.jumpsLeft = this.properties.additionalJumps;
+        this.stillJumps = false;
         conn.ws.once("close", e => {
             this.destroy();
         });
-        // conn.initCommand(DC.SET_VEL, (c) => {
-        //     this.body.coordinates.x = c.readFloatLE(0); this.body.coordinates.y = c.readFloatLE(4);
-        // })
         conn.initCommand(DC.GET_ME, (c) => {
             this.conn.sendData(DC.SET_ME, this.toByte());
         });
         conn.initCommand(DC.SET_KEY, (c) => {
             this.currentControl = this.properties.keysToVec(c);
-            // add here the controll to current and after read current on tick
             this.conn.sendData(DC.DEBUG, this.currentControl.toByte());
         });
         conn.initCommand(DC.GET_ENV, (c) => {
@@ -294,9 +236,9 @@ export class Player extends Entity {
             this.conn.sendData(DC.SET_ENV, this.body.manager.toByte(this, withPlayers, renderDistance));
         });
     }
-    jump() {
+    jump(holdJump = false) {
         const vj = this.properties.jumpK / 2;
-        const hj = 13;
+        const hj = 9;
         let colds = this.body.manager.sidesThatCollides(this.body, FLAG.ANY);
         if (colds.length > 0) {
             if (colds.includes(DIR.UP)) {
@@ -312,25 +254,39 @@ export class Player extends Entity {
                 this.body.velocity.y = vj;
                 this.body.velocity.x = -hj;
                 this.facingRight = false;
+                return;
             }
             if (colds.includes(DIR.LEFT)) {
                 this.body.coordinates.x += 3;
                 this.body.velocity.y = vj;
                 this.body.velocity.x = hj;
                 this.facingRight = true;
+                return;
             }
+        }
+        else if (this.jumpsLeft > 0 && !holdJump) {
+            this.body.velocity.y = this.properties.jumpK;
+            this.jumpsLeft--;
         }
     }
     control(vec) {
         if (Math.abs(vec.x) > 0.1)
             this.facingRight = vec.x > 0;
-        if (this.manager.collidesWithSomething(this).length == 0)
+        if (this.body.manager.collidesWithSomeFlag(this.body).length == 0) {
             vec.x *= 0.7;
+        }
         this.body.velocity.addV(vec);
-        if (vec.y > 0)
-            this.jump();
+        if (vec.y > 0) {
+            this.jump(this.stillJumps);
+            this.stillJumps = true;
+        }
+        else {
+            this.stillJumps = false;
+        }
     }
     update(dt) {
+        if (this.body.manager.collidesWithSomeFlag(this.body, FLAG.GROUND).length > 0)
+            this.jumpsLeft = this.properties.additionalJumps;
         this.control(this.currentControl.clone());
         super.update(dt);
     }
@@ -343,43 +299,9 @@ export class Player extends Entity {
         const body = this.body.toByte();
         const props = this.properties.toByte();
         const total = [body, props];
-        // console.warn(total);
         return Buffer.concat(total, 16 + INFO.FLAGBUFFLEN + INFO.PROPSBUFFLEN);
     }
 }
-// export class Camera extends Entity {
-//     // coordinates: Vector2;
-//     canvas: Canvas = CANVAS;
-//     constructor(Emanager: EntityManager, Bmanager: BodyManager) {
-//         super(Emanager, Bmanager);
-//         this.body.hasHitbox = false;
-//         // this.canvas = new Canvas(new Ctx(width, height));
-//     }
-//     public move(vector: Vector2): void {
-//         this.body.coordinates.addV(vector);
-//     }
-//     centerCam(target: Vector2): void {
-//         let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5 / CTX.scaleK)
-//         let dif = target.CaddV(this.body.center().CmultiplyS(-1))
-//         dif.addV(center);
-//         dif.multiplyS(0.2);
-//         // this.body.center()
-//         this.body.velocity.set(dif);
-//         // console.log(dif.toString());
-//     }
-//     forceCenterCam(target: Vector2): void {
-//         let center = new Vector2(CTX.width, CTX.height).multiplyS(-0.5 / CTX.scaleK)
-//         this.body.coordinates.set(target.CaddV(center));
-//     }
-//     // inView(p: Vector2): boolean {
-//     //     // TODO finish the func to che if point in view
-//     //     // new Hitbox{
-//     //     //     x1
-//     //     // }
-//     // }
-//     // render(): void {
-//     // }
-// }
 export class BodyManager {
     constructor(scene) {
         this.scene = scene;
@@ -388,18 +310,23 @@ export class BodyManager {
     addBody(body) {
         this.bodies.push(body);
     }
-    collidesWithSomething(body, flag = FLAG.ANY) {
+    collidesWithSomeFlag(body, flag = FLAG.ANY) {
+        return this.collidesWithAnything(body).filter(a => a.hasFlag(flag));
+    }
+    collidesWithAnything(body) {
+        if (body.currentTickColl)
+            return body.currentTickColl;
         let collidedBodies = [];
-        // return this.entities.some(another => entity !== another && entity.body.collide(another.body));
         for (let i = 0; i < this.bodies.length; i++) {
-            if (body != this.bodies[i] && this.bodies[i].hasFlag(flag) && body.collide(this.bodies[i])) {
+            if (body.collide(this.bodies[i]) && body != this.bodies[i]) {
                 collidedBodies.push(this.bodies[i]);
             }
         }
+        body.currentTickColl = collidedBodies;
         return collidedBodies;
     }
     sidesThatCollides(body, flag = FLAG.ANY) {
-        let colds = this.collidesWithSomething(body, flag);
+        let colds = this.collidesWithSomeFlag(body, flag);
         let dirs = [];
         for (let i = 0; i < colds.length; i++) {
             dirs.push(body.sideCollide(colds[i]));
@@ -415,7 +342,6 @@ export class BodyManager {
         let data = [];
         for (let i = 0; i < this.bodies.length; i++) {
             if (this.bodies[i].distance(me.body) < renderDistance) {
-                // console.log(this.bodies[i].hasFlag(FLAG.PLAYER), this.bodies[i]);
                 if (withPlayers || !this.bodies[i].hasFlag(FLAG.PLAYER)) {
                     if (this.bodies[i] != me.body) {
                         data.push(this.bodies[i].toByte());
@@ -423,10 +349,10 @@ export class BodyManager {
                 }
             }
         }
-        // console.log(data)
         return Buffer.concat(data, data.length * (16 + INFO.FLAGBUFFLEN));
     }
 }
+export const DEBUG = [0, 0];
 export class EntityManager {
     constructor(scene) {
         this.entities = [];
@@ -435,18 +361,21 @@ export class EntityManager {
     addEntity(entity) {
         this.entities.push(entity);
     }
-    collidesWithSomething(entity, flag = FLAG.ANY) {
+    DEPcollidesWithSomething(entity, flag = FLAG.ANY) {
+        const start = process.hrtime();
         let collidedEntities = [];
-        // return this.entities.some(another => entity !== another && entity.body.collide(another.body));
         for (let i = 0; i < this.entities.length; i++) {
             if (entity !== this.entities[i] && entity.body.collide(this.entities[i].body) && this.entities[i].hasFlag(flag)) {
                 collidedEntities.push(this.entities[i]);
             }
         }
+        const end = process.hrtime(start);
+        DEBUG[0] += 1;
+        DEBUG[1] += (end[0] * 1e9 + end[1]) / 1e6;
         return collidedEntities;
     }
-    sidesThatCollides(entitiy, flag = FLAG.ANY) {
-        let colds = this.collidesWithSomething(entitiy, flag);
+    DEPsidesThatCollides(entitiy, flag = FLAG.ANY) {
+        let colds = this.DEPcollidesWithSomething(entitiy, flag);
         let dirs = [];
         for (let i = 0; i < colds.length; i++) {
             dirs.push(entitiy.body.sideCollide(colds[i].body));
@@ -461,17 +390,10 @@ export class EntityManager {
 }
 export class Scene {
     constructor(ID) {
-        // manager: SceneManager;
         this.entityManager = new EntityManager(this);
         this.bodyManager = new BodyManager(this);
-        // camera: Camera = new Camera(this.entityManager, this.bodyManager);
         this.ctxScale = 1;
         this.ID = ID;
-        // this.manager = SCENEMANAGER;
-        // this.entityManager = new EntityManager(this);
-        // this.bodyManager = new BodyManager(this);
-        // let cam = new Camera(this.entityManager, this.bodyManager);
-        // this.camera = new Camera(this.entityManager, this.bodyManager)
     }
     addEntity(entity) {
         entity.manager = this.entityManager;
@@ -481,7 +403,6 @@ export class Scene {
     }
     newEntity() {
         return new Entity(this.entityManager, this.bodyManager);
-        // this.entityManager.addEntity()
     }
     newBody(width = 0, height = 0) {
         return new Body(this.bodyManager, width, height);
@@ -491,13 +412,12 @@ export class Scene {
         obj.coordinates.x = x;
         obj.coordinates.y = y;
         obj.staticObj = true;
-        obj.friction.set(new Vector2(0.9, 0.88));
+        obj.friction.set(new Vector2(0.93, 0.86));
         obj.addFlags(flags);
         return obj;
     }
     update(dt = 0) {
         this.entityManager.update(dt);
-        // this.bodyManager.update(dt);
     }
 }
 export class SceneManager {
@@ -506,7 +426,6 @@ export class SceneManager {
         this.players = [];
         this.noScene = new Scene(-1);
         this.currentScene = this.noScene;
-        // this.currentScene = this.noScene;
     }
     findScene(ID) {
         for (let i = 0; i < this.scenes.length; i++) {
@@ -521,7 +440,6 @@ export class SceneManager {
     newPlayer(conn) {
         let player = new Player(conn, this.currentScene.entityManager, this.currentScene.bodyManager);
         this.players.push(player);
-        // this.addPlayer(player);
         return player;
     }
     addPlayer(player) {
@@ -529,13 +447,8 @@ export class SceneManager {
     }
     selectScene(ID) {
         this.currentScene = this.findScene(ID);
-        // CTX.scale(this.currentScene.ctxScale)
         return this.currentScene;
     }
-    // scaleCtx(k: number): void {
-    //     this.currentScene.ctxScale = k;
-    //     CTX.scale(k);
-    // }
     update(dt) {
         this.currentScene.update(dt);
     }

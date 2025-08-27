@@ -18,7 +18,7 @@
     "asbuildS": "npm run asbuildS:debug && npm run asbuildS:release",
     "testS": "/node tests",
     "compS": "npx tsc -p server/tsconfig.json && npx tsc -p shared/tsconfig.json",
-    "startS": "node --prof server/run.js",
+    "startS": "del *log && node --prof server/run.js",
     "makeS": "npm run compS && npm run startS"
   },
   "devDependencies": {

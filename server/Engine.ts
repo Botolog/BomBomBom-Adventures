@@ -30,6 +30,8 @@ export class Body {
     speedLim: number = 20;
     scripts: ((T: Body) => void)[] = [];
 
+    
+    currentTickColl: Body[]|undefined = undefined;
     radius: number;
 
     constructor(manager: BodyManager, width: number = 0, height: number = 0) {
@@ -129,7 +131,7 @@ export class Body {
     }
 
     calcFriction(): Vector2 {
-        let colds = this.manager.collidesWithSomething(this);
+        let colds = this.manager.collidesWithSomeFlag(this);
         let mod = new Vector2(1, 1);
         for (let i = 0; i < colds.length; i++) {
             mod.multiplyV(colds[i].friction);
@@ -155,8 +157,8 @@ export class Body {
         // this.velocity.x = absMin(this.velocity.x, this.speedLim)
 
         this.coordinates.addV(this.velocity.CmultiplyS(dt).absMin(this.speedLim));
-
-        let colds = this.manager.collidesWithSomething(this, FLAG.ANY)
+        this.currentTickColl = undefined;
+        let colds = this.manager.collidesWithSomeFlag(this, FLAG.ANY)
         for (let i = 0; i < colds.length; i++) {
             const col = colds[i]
             const side = this.sideCollide(col)
@@ -180,6 +182,7 @@ export class Body {
                     break;
             }
         }
+        
     }
 
     // inScreen(): boolean{
@@ -227,8 +230,8 @@ export class Body {
 
     inRadiusOf(another: Body, log: boolean = false) {
         // Calculate the difference in x and y coordinates.
-        const dx: number = 0.5 * (another.coordinates.x + another.size.x) - 0.5 * (this.coordinates.x + this.size.x);
-        const dy: number = 0.5 * (another.coordinates.y + another.size.y) - 0.5 * (this.coordinates.y + this.size.y);
+        const dx: number = (another.coordinates.x + (another.size.x * 0.5)) - (this.coordinates.x + (this.size.x * 0.5));
+        const dy: number = (another.coordinates.y + (another.size.y * 0.5)) - (this.coordinates.y + (this.size.y * 0.5));
 
         // Calculate the squared distance between the circle centers.
         const distanceSquared: number = dx * dx + dy * dy;
@@ -239,9 +242,9 @@ export class Body {
         // Compare the squared distance with the squared sum of the radii.
         // This is more efficient than calculating the square root of the distance.
         const radiiSumSquared: number = radiiSum * radiiSum;
-        if (log){
+        if (log) {
             console.log(dx, dy, distanceSquared, radiiSumSquared);
-            
+
         }
 
         return distanceSquared <= radiiSumSquared;
@@ -352,7 +355,8 @@ export class Player extends Entity {
     properties: Properties = new Properties();
     // mAttackB: Body;
     conn: Conn;
-
+    jumpsLeft: number;
+    stillJumps: boolean;
     currentControl: Vector2 = Zvec.clone()
 
     constructor(conn: Conn, entityManager: EntityManager, bodyManager: BodyManager) {
@@ -364,12 +368,15 @@ export class Player extends Entity {
         this.body.size.y = 20;
         this.body.gravity.set(new Vector2(0, -0.25));
         // this.body.velocity.y = -10;
-        this.body.drag = new Vector2(0.9, 0.99);
+        this.body.drag = new Vector2(0.92, 0.99);
         this.body.coordinates.y = 50;
         this.body.speedLim = 10;
         this.body.addFlag(FLAG.PLAYER);
 
         this.conn = conn;
+
+        this.jumpsLeft = this.properties.additionalJumps;
+        this.stillJumps = false;
 
         conn.ws.once("close", e => {
             this.destroy()
@@ -399,9 +406,9 @@ export class Player extends Entity {
 
     }
 
-    jump(): void {
+    jump(holdJump: boolean = false): void {
         const vj = this.properties.jumpK / 2;
-        const hj = 13;
+        const hj = 9;
         let colds = this.body.manager.sidesThatCollides(this.body, FLAG.ANY);
 
         if (colds.length > 0) {
@@ -416,25 +423,38 @@ export class Player extends Entity {
                 this.body.velocity.y = vj;
                 this.body.velocity.x = -hj;
                 this.facingRight = false;
+                return;
             }
             if (colds.includes(DIR.LEFT)) {
                 this.body.coordinates.x += 3;
                 this.body.velocity.y = vj;
                 this.body.velocity.x = hj;
                 this.facingRight = true;
+                return;
             }
 
+        }
+        else if (this.jumpsLeft > 0 && !holdJump) {
+            this.body.velocity.y = this.properties.jumpK;
+            this.jumpsLeft--;
         }
     }
 
     control(vec: Vector2): void {
         if (Math.abs(vec.x) > 0.1) this.facingRight = vec.x > 0;
-        if (this.manager.collidesWithSomething(this).length == 0) vec.x *= 0.7
+        if (this.body.manager.collidesWithSomeFlag(this.body).length == 0) { vec.x *= 0.7 }
         this.body.velocity.addV(vec);
-        if (vec.y > 0) this.jump();
+        if (vec.y > 0) {
+            this.jump(this.stillJumps);
+            this.stillJumps = true;
+        }
+        else {
+            this.stillJumps = false
+        }
     }
 
     update(dt: number): void {
+        if (this.body.manager.collidesWithSomeFlag(this.body, FLAG.GROUND).length>0) this.jumpsLeft = this.properties.additionalJumps;
         this.control(this.currentControl.clone());
         super.update(dt);
 
@@ -515,19 +535,25 @@ export class BodyManager {
         this.bodies.push(body);
     }
 
-    collidesWithSomething(body: Body, flag: FLAG = FLAG.ANY): Body[] {
+    collidesWithSomeFlag(body: Body, flag: FLAG = FLAG.ANY): Body[] {
+        return this.collidesWithAnything(body).filter(a=>a.hasFlag(flag));
+    }
+
+    collidesWithAnything(body: Body): Body[] {
+        if (body.currentTickColl) return body.currentTickColl;
         let collidedBodies: Body[] = []
         // return this.entities.some(another => entity !== another && entity.body.collide(another.body));
         for (let i = 0; i < this.bodies.length; i++) {
-            if (body != this.bodies[i] && this.bodies[i].hasFlag(flag) && body.collide(this.bodies[i])) {
+            if (body.collide(this.bodies[i]) && body != this.bodies[i]) {
                 collidedBodies.push(this.bodies[i]);
             }
         }
+        body.currentTickColl = collidedBodies;
         return collidedBodies;
     }
 
     sidesThatCollides(body: Body, flag: FLAG = FLAG.ANY): DIR[] {
-        let colds = this.collidesWithSomething(body, flag);
+        let colds = this.collidesWithSomeFlag(body, flag);
         let dirs: DIR[] = [];
         for (let i = 0; i < colds.length; i++) {
             dirs.push(body.sideCollide(colds[i]));
@@ -566,6 +592,8 @@ export class BodyManager {
     // }
 }
 
+export const DEBUG = [0, 0];
+
 export class EntityManager {
     entities: Entity[];
     scene: Scene;
@@ -579,7 +607,8 @@ export class EntityManager {
         this.entities.push(entity);
     }
 
-    collidesWithSomething(entity: Entity, flag: FLAG = FLAG.ANY): Entity[] {
+    DEPcollidesWithSomething(entity: Entity, flag: FLAG = FLAG.ANY): Entity[] {
+        const start = process.hrtime();
         let collidedEntities: Entity[] = []
         // return this.entities.some(another => entity !== another && entity.body.collide(another.body));
         for (let i = 0; i < this.entities.length; i++) {
@@ -587,11 +616,14 @@ export class EntityManager {
                 collidedEntities.push(this.entities[i]);
             }
         }
+        const end = process.hrtime(start);
+        DEBUG[0] += 1;
+        DEBUG[1] += (end[0] * 1e9 + end[1]) / 1e6;
         return collidedEntities;
     }
 
-    sidesThatCollides(entitiy: Entity, flag: FLAG = FLAG.ANY): DIR[] {
-        let colds = this.collidesWithSomething(entitiy, flag);
+    DEPsidesThatCollides(entitiy: Entity, flag: FLAG = FLAG.ANY): DIR[] {
+        let colds = this.DEPcollidesWithSomething(entitiy, flag);
         let dirs: DIR[] = [];
         for (let i = 0; i < colds.length; i++) {
             dirs.push(entitiy.body.sideCollide(colds[i].body));
@@ -649,7 +681,7 @@ export class Scene {
         let obj = this.newBody(width, height);
         obj.coordinates.x = x; obj.coordinates.y = y;
         obj.staticObj = true;
-        obj.friction.set(new Vector2(0.9, 0.88));
+        obj.friction.set(new Vector2(0.93, 0.86));
         obj.addFlags(flags);
         return obj;
     }

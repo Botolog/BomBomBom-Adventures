@@ -10,8 +10,8 @@ export class Properties {
     meleeDamage: number = 10;
     meleeRange: number = 50;
     specialDamage: number = 20;
-    canDoubleJump: boolean = false;
-    canWallJump: boolean = false;
+    additionalJumps: number = 1;
+    canWallJump: boolean = true;
     dashSpeed: number = 10;
     maxSpeed: number = 10;
 
