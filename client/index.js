@@ -23,12 +23,12 @@ import {
 } from "./defs.js"
 
 
-export let renderDistance = 70
+export let renderDistance = Screen[0]
 let renderRequestOptions = new ArrayBuffer(3)
 let view = new DataView(renderRequestOptions)
 view.setUint8(0, true)
 
-view.setUint16(1, 500, true)
+view.setUint16(1, renderDistance, true)
 // view.setUint16(1, Math.sqrt(Screen[0]**2+Screen[1]**2), true)
 renderRequestOptions = new Uint8Array(renderRequestOptions)
 

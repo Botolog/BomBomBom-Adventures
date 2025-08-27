@@ -8,7 +8,7 @@ export let reconnectInterval = 3000; // 3 seconds
 
 export let canvas = document.getElementById("canvas");
 export const ctx = canvas.getContext('2d');
-export const Screen = [1600, 700]
+export const Screen = [1000, 450]
 canvas.width = Screen[0];
 canvas.height = Screen[1];
 
@@ -36,7 +36,7 @@ export class Me {
             this.fromByte(data);
         }
     }
-    
+
     fromByte(data) {
         const buffer = data;
 
@@ -174,12 +174,17 @@ export function clear() {
     
 }
 
+let offset = [0,0];
+const margin =[Screen[0]/10, Screen[1]/10];
+
 export function draw(renderObject) {
-    const offX = ME.x1-Screen[0]/2; const offY = -Screen[1]/20;
+    offset[0] = Math.max(Math.min(ME.x1-margin[0], offset[0]), ME.x1+ME.x2-Screen[0]+margin[0])
+    offset[1] = Math.max(Math.min(ME.y1-margin[1], offset[1]), ME.y1+ME.y2-Screen[1]+margin[1])
+    // const offX = ME.x1-Screen[0]/2; const offY = -Screen[1]/20;
     ctx.strokeStyle = renderObject.color;
     ctx.lineWidth = renderObject.size;
     if (renderObject.type == "box") {
-        ctx.rect(renderObject.x1-offX, renderObject.y1-offY, renderObject.x2, renderObject.y2);
+        ctx.rect(renderObject.x1-offset[0], renderObject.y1-offset[1], renderObject.x2, renderObject.y2);
     }
 }
 
