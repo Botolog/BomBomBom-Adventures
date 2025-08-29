@@ -19,6 +19,7 @@
     "testS": "/node tests",
     "compS": "npx tsc -p server/tsconfig.json && npx tsc -p shared/tsconfig.json",
     "startS": "del *log && node --prof server/run.js",
+    "startSV": "node server/run.js",
     "makeS": "npm run compS && npm run startS"
   },
   "devDependencies": {
