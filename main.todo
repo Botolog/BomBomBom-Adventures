@@ -1,3 +1,10 @@
 
 TODO: make chat like mc
 TODO: Optimize server fisics engine
+TODO: make textures for evry object
+TODO: render textures instead of boxes
+TODO: make multilayerd canvas (with transpaternt background and display none) for slow background and ui
+TODO: oh ye add ui
+TODO: make player object export to file and load player object from file
+TODO: make "login" logic with the uid or shit with hash to secure
+TODO: handle multiple signs for one uid (maybe kick the firs or the second)
